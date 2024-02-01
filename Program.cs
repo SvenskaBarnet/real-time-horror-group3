@@ -50,9 +50,6 @@ void Router(HttpListenerContext context)
 
     switch (request.HttpMethod)
     {
-        case "GET":
-            NotFound(response);
-            break;
         default:
             NotFound(response);
             break;
