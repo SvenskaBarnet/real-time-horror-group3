@@ -1,39 +1,64 @@
-﻿using Npgsql;
+﻿using real_time_horror_group3;
+using Npgsql;
+using System.Net;
 
 string dbUri = "Host=localhost;Port=5455;Username=postgres;Password=postgres;Database=NotSoHomeAlone";
 await using var db = NpgsqlDataSource.Create(dbUri);
 
-await using var cmd = db.CreateCommand(@"
-CREATE TABLE IF NOT EXISTS room
-(
-    id serial,
-    name text NOT NULL,
-    PRIMARY KEY (id)
-);
+// await Database.Create(db);
 
-CREATE TABLE IF NOT EXISTS entry_point
-(
-    id serial,
-    name text NOT NULL,
-    room_id integer,
-    is_locked boolean NOT NULL DEFAULT False,
-    PRIMARY KEY (id)
-);
+bool listen = true;
 
-ALTER TABLE IF EXISTS entry_point
-    ADD CONSTRAINT room_id FOREIGN KEY (room_id) REFERENCES room (id); 
+Console.CancelKeyPress += delegate (object? sender, ConsoleCancelEventArgs e)
+{
+    Console.WriteLine("Interupting cancel event");
+    e.Cancel = true;
+    listen = false;
+};
 
-INSERT INTO room(
-	name)
-	VALUES ('Cabin');
+int port = 3000;
 
-INSERT INTO entry_point(
-	name, room_id)
-	VALUES 
-	('Window A', 1), 
-	('Window B', 1),
-	('Door A', 1);
-");
+HttpListener listener = new();
+listener.Prefixes.Add($"http://localhost:{port}/");
 
-await cmd.ExecuteNonQueryAsync();
-Console.WriteLine("Created and populated DB");
+try
+{
+    listener.Start();
+    listener.BeginGetContext(new AsyncCallback(HandleRequest), listener);
+    Console.WriteLine($"Server listening on port {port}");
+    while (listen) { };
+}
+finally
+{
+    listener.Stop();
+}
+
+void HandleRequest(IAsyncResult result)
+{
+    if (result.AsyncState is HttpListener listener)
+    {
+        HttpListenerContext context = listener.EndGetContext(result);
+        Router(context);
+        listener.BeginGetContext(new AsyncCallback(HandleRequest), listener);
+    }
+}
+
+void Router(HttpListenerContext context)
+{
+    HttpListenerRequest request = context.Request;
+    HttpListenerResponse response = context.Response;
+
+    switch (request.HttpMethod)
+    {
+        default:
+            NotFound(response);
+            break;
+           
+    }
+}
+
+void NotFound(HttpListenerResponse response)
+{
+    response.StatusCode = (int)HttpStatusCode.NotFound;
+    response.Close();
+}
