@@ -38,6 +38,30 @@ void HandleRequest(IAsyncResult result)
     if (result.AsyncState is HttpListener listener)
     {
         HttpListenerContext context = listener.EndGetContext(result);
+        Router(context);
         listener.BeginGetContext(new AsyncCallback(HandleRequest), listener);
     }
+}
+
+void Router(HttpListenerContext context)
+{
+    HttpListenerRequest request = context.Request;
+    HttpListenerResponse response = context.Response;
+
+    switch (request.HttpMethod)
+    {
+        case "GET":
+            NotFound(response);
+            break;
+        default:
+            NotFound(response);
+            break;
+           
+    }
+}
+
+void NotFound(HttpListenerResponse response)
+{
+    response.StatusCode = (int)HttpStatusCode.NotFound;
+    response.Close();
 }
