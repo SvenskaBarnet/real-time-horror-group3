@@ -7,10 +7,10 @@ using System.Text;
 string dbUri = "Host=localhost;Port=5455;Username=postgres;Password=postgres;Database=NotSoHomeAlone";
 await using var db = NpgsqlDataSource.Create(dbUri);
 
-await Database.Create(db);
+// await Database.Create(db);
 
 bool listen = true;
-
+var Check = new Check(db);
 
 Console.CancelKeyPress += delegate (object? sender, ConsoleCancelEventArgs e)
 {
@@ -46,7 +46,7 @@ void HandleRequest(IAsyncResult result)
     }
 }
 
-void Router(HttpListenerContext context)
+async void Router(HttpListenerContext context)
 {
     HttpListenerRequest request = context.Request;
     HttpListenerResponse response = context.Response;
@@ -55,16 +55,21 @@ void Router(HttpListenerContext context)
     {
         case ("GET", string check) when check.StartsWith("/check"):
 
-            
-            switch(request.Url.AbsolutePath.ToLower())
-            {
-                case (string door) when door.EndsWith("/door"):
-                Door(response);
-                break;
 
-            default:
-                NotFound(response);
-                break;
+            switch (request.Url.AbsolutePath.ToLower())
+            {
+                case (string door) when door.EndsWith("/check"):
+                    Check checker = new Check(db);
+                    await checker.Room(response);
+                    break;
+
+                case (string door) when door.EndsWith("/door"):
+                    Door(response);
+                    break;
+
+                default:
+                    NotFound(response);
+                    break;
             }
             break;
 
