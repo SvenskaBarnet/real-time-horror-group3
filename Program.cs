@@ -79,6 +79,11 @@ void Router(HttpListenerContext context)
         default:
             NotFound(response);
             break;
+
+
+
+
+
     }
 
 }
@@ -151,7 +156,4 @@ void Check(HttpListenerResponse response)
     response.OutputStream.Write(buffer, 0, buffer.Length);
     response.OutputStream.Close();
 }
-
-
-
 
