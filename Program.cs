@@ -43,8 +43,6 @@ void HandleRequest(IAsyncResult result)
         HttpListenerContext context = listener.EndGetContext(result);
         Router(context);
         listener.BeginGetContext(new AsyncCallback(HandleRequest), listener);
-
-
     }
 }
 
@@ -58,7 +56,35 @@ void Router(HttpListenerContext context)
 
     switch (path)
     {
+        case "/door":
+            if (request.HttpMethod == "GET")
+            {
+                Door(response);
+            }
+            else
+            {
+                Error(response); 
+            }
+            break;
 
+        case "/window":
+            if (request.HttpMethod == "GET")
+            {
+                Window(response);
+            }
+            else
+            {
+                Error(response);
+            }
+            break;
+
+        case "/help":
+            if (request.HttpMethod == "GET")
+            {
+                Help(response);
+            }
+
+            break;
         default:
             NotFound(response);
             break;
@@ -68,10 +94,9 @@ void Router(HttpListenerContext context)
 
 void NotFound(HttpListenerResponse response)
 {
-    string message = "invaild option";
+    string message = "invaild option, try \"/help\"";
     byte[] buffer = Encoding.UTF8.GetBytes(message);
     response.ContentType = "text/plain";
-    response.StatusCode = (int)HttpStatusCode.OK;
 
     response.OutputStream.Write(buffer, 0, buffer.Length);
     response.OutputStream.Close();
@@ -79,3 +104,50 @@ void NotFound(HttpListenerResponse response)
     response.StatusCode = (int)HttpStatusCode.NotFound;
     response.Close();
 }
+
+void Door(HttpListenerResponse response)
+{
+    string message = "Here is a door";
+    byte[] buffer = Encoding.UTF8.GetBytes(message);
+    response.ContentType = "text/plain";
+    response.StatusCode = (int)HttpStatusCode.OK;
+
+    response.OutputStream.Write(buffer, 0, buffer.Length);
+    response.OutputStream.Close();
+}
+
+void Window(HttpListenerResponse response)
+{
+    string message = "Here is a window";
+    byte[] buffer = Encoding.UTF8.GetBytes(message);
+    response.ContentType = "text/plain";
+    response.StatusCode = (int)HttpStatusCode.OK;
+
+    response.OutputStream.Write(buffer, 0, buffer.Length);
+    response.OutputStream.Close();
+}
+
+void Error(HttpListenerResponse response)
+{
+    string message = "Error code";
+    byte[] buffer = Encoding.UTF8.GetBytes(message);
+    response.ContentType = "text/plain";
+    response.StatusCode = (int)HttpStatusCode.OK;
+
+    response.OutputStream.Write(buffer, 0, buffer.Length);
+    response.OutputStream.Close();
+}
+
+void Help(HttpListenerResponse response)
+{
+    string message = "Available path \"/door\" and \"/window\"";
+    byte[] buffer = Encoding.UTF8.GetBytes(message);
+    response.ContentType = "text/plain";
+    response.StatusCode = (int)HttpStatusCode.OK;
+
+    response.OutputStream.Write(buffer, 0, buffer.Length);
+    response.OutputStream.Close();
+}
+
+
+
