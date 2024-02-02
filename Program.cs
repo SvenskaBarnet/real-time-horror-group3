@@ -4,6 +4,7 @@ using System.Net;
 using static System.Net.Mime.MediaTypeNames;
 using System.Text;
 
+
 string dbUri = "Host=localhost;Port=5455;Username=postgres;Password=postgres;Database=NotSoHomeAlone";
 await using var db = NpgsqlDataSource.Create(dbUri);
 
@@ -29,7 +30,9 @@ try
     listener.Start();
     listener.BeginGetContext(new AsyncCallback(HandleRequest), listener);
     Console.WriteLine($"Server listening on port {port}");
-    while (listen) { };
+    while (listen)
+    {
+    };
 }
 finally
 {
@@ -53,22 +56,33 @@ void Router(HttpListenerContext context)
 
     switch (request.HttpMethod, request.Url?.AbsolutePath.ToLower())
     {
-        case ("GET", string check) when check.StartsWith("/check"):
-
-            // skriva ut vilka alternativ som finns i rummet?
+        case ("GET", string start) when start.StartsWith("/start"):
             
-            switch(request.Url.AbsolutePath.ToLower())
+            switch (request.Url.AbsolutePath.ToLower())
             {
-                case (string door) when door.EndsWith("/door"):
-                Door(response);
-                break;
+                case (string onlyStart) when onlyStart.EndsWith("/start"):
+                    IntroStory intro = new IntroStory();
+                    intro.CallStory(response);
+                    break;
+                case (string check) when check.EndsWith("/check"):
 
-            default:
-                NotFound(response);
-                break;
+                    // skriva ut vilka alternativ som finns i rummet?
+
+                    switch (request.Url.AbsolutePath.ToLower())
+                    {
+                        case (string door) when door.EndsWith("/door"):
+                            Door(response);
+                            break;
+
+                        default:
+                            NotFound(response);
+                            break;
+                    }
+                    break;
+                default:
+                    break;
             }
             break;
-
         case ("GET", "/window"):
             Window(response);
             break;
@@ -142,7 +156,7 @@ void Help(HttpListenerResponse response)
 
 void Check(HttpListenerResponse response)
 {
-   // hämta från databas vad som finns i rummet
+    // hämta från databas vad som finns i rummet
     string message = "Available path \"/door\" and \"/window\"";
     byte[] buffer = Encoding.UTF8.GetBytes(message);
     response.ContentType = "text/plain";
