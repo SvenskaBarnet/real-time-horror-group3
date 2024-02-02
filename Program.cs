@@ -51,10 +51,22 @@ void Router(HttpListenerContext context)
     HttpListenerRequest request = context.Request;
     HttpListenerResponse response = context.Response;
 
-    switch (request.HttpMethod, request.Url?.AbsolutePath)
+    switch (request.HttpMethod, request.Url?.AbsolutePath.ToLower())
     {
-        case ("GET", "/door"):
-            Door(response);
+        case ("GET", string check) when check.StartsWith("/check"):
+
+            // skriva ut vilka alternativ som finns i rummet?
+            
+            switch(request.Url.AbsolutePath.ToLower())
+            {
+                case (string door) when door.EndsWith("/door"):
+                Door(response);
+                break;
+
+            default:
+                NotFound(response);
+                break;
+            }
             break;
 
         case ("GET", "/window"):
@@ -127,6 +139,19 @@ void Help(HttpListenerResponse response)
     response.OutputStream.Write(buffer, 0, buffer.Length);
     response.OutputStream.Close();
 }
+
+void Check(HttpListenerResponse response)
+{
+   // hämta från databas vad som finns i rummet
+    string message = "Available path \"/door\" and \"/window\"";
+    byte[] buffer = Encoding.UTF8.GetBytes(message);
+    response.ContentType = "text/plain";
+    response.StatusCode = (int)HttpStatusCode.OK;
+
+    response.OutputStream.Write(buffer, 0, buffer.Length);
+    response.OutputStream.Close();
+}
+
 
 
 
