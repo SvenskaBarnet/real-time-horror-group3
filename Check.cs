@@ -30,7 +30,21 @@ public class Check(NpgsqlDataSource db)
 
     async Task<string> GetStatus(int roomId, string type)
     {
-        
+        string message = string.Empty;
+        await using var query = db.CreateCommand(@"
+                SELECT name, is_locked)
+                FROM entry_point
+	            WHERE room_id = $1 AND type = $2;                
+                ");
+        query.Parameters.AddWithValue(roomId);
+        query.Parameters.AddWithValue(type);
+        var reader = await query.ExecuteReaderAsync();
+
+        while(await reader.ReadAsync())
+        {
+            message += "" 
+        }
+        return count;
     }
 
 }
