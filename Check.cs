@@ -14,7 +14,7 @@ public class Check(NpgsqlDataSource db)
             int windowCount = await CountEntryPoints(roomId, "Window");
 
 
-            string message = $"Room has {doorCount} external doors and {windowCount} windows.";
+            string message = $"Room has {doorCount} external door(s) and {windowCount} window(s).";
             byte[] buffer = Encoding.UTF8.GetBytes(message);
             response.ContentType = "text/plain";
             response.StatusCode = (int)HttpStatusCode.OK;

@@ -4,6 +4,7 @@ using System.Net;
 using static System.Net.Mime.MediaTypeNames;
 using System.Text;
 
+
 string dbUri = "Host=localhost;Port=5455;Username=postgres;Password=postgres;Database=NotSoHomeAlone";
 await using var db = NpgsqlDataSource.Create(dbUri);
 
@@ -29,7 +30,9 @@ try
     listener.Start();
     listener.BeginGetContext(new AsyncCallback(HandleRequest), listener);
     Console.WriteLine($"Server listening on port {port}");
-    while (listen) { };
+    while (listen)
+    {
+    };
 }
 finally
 {
@@ -53,11 +56,15 @@ async void Router(HttpListenerContext context)
 
     switch (request.HttpMethod, request.Url?.AbsolutePath.ToLower())
     {
-        case ("GET", string check) when check.StartsWith("/check"):
-
-
+        case ("GET", string start) when start.StartsWith("/start"):
+            
             switch (request.Url.AbsolutePath.ToLower())
             {
+                case (string onlyStart) when onlyStart.EndsWith("/start"):
+                    IntroStory intro = new IntroStory();
+                    intro.CallStory(response);
+                    break;
+
                 case (string door) when door.EndsWith("/check"):
                     Check checker = new Check(db);
                     await checker.Room(response);
@@ -72,7 +79,6 @@ async void Router(HttpListenerContext context)
                     break;
             }
             break;
-
         case ("GET", "/window"):
             Window(response);
             break;
