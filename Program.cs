@@ -51,39 +51,18 @@ void Router(HttpListenerContext context)
     HttpListenerRequest request = context.Request;
     HttpListenerResponse response = context.Response;
 
-    string path = request.Url?.AbsolutePath.ToLower() ?? "/";
-
-
-    switch (path)
+    switch (request.HttpMethod, request.Url?.AbsolutePath)
     {
-        case "/door":
-            if (request.HttpMethod == "GET")
-            {
-                Door(response);
-            }
-            else
-            {
-                Error(response); 
-            }
+        case ("GET", "/door"):
+            Door(response);
             break;
 
-        case "/window":
-            if (request.HttpMethod == "GET")
-            {
-                Window(response);
-            }
-            else
-            {
-                Error(response);
-            }
+        case ("GET", "/window"):
+            Window(response);
             break;
 
-        case "/help":
-            if (request.HttpMethod == "GET")
-            {
-                Help(response);
-            }
-
+        case ("GET", "/help"):
+            Help(response);
             break;
         default:
             NotFound(response);
