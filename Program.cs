@@ -5,7 +5,7 @@ using System.Net;
 string dbUri = "Host=localhost;Port=5455;Username=postgres;Password=postgres;Database=NotSoHomeAlone";
 await using var db = NpgsqlDataSource.Create(dbUri);
 
-// await Database.Create(db);
+//await Database.Create(db);
 
 bool listen = true;
 
