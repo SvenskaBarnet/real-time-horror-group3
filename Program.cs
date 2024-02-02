@@ -19,7 +19,7 @@ Console.CancelKeyPress += delegate (object? sender, ConsoleCancelEventArgs e)
     e.Cancel = true;
     listen = false;
 };
-
+    
 int port = 3000;
 
 HttpListener listener = new();
