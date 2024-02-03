@@ -57,6 +57,7 @@ async void Router(HttpListenerContext context)
     switch (request.HttpMethod, request.Url?.AbsolutePath.ToLower())
     {
         case ("GET", string start) when start.StartsWith("/start"):
+            Player player = new Player(1);
             
             switch (request.Url.AbsolutePath.ToLower())
             {
@@ -67,7 +68,7 @@ async void Router(HttpListenerContext context)
 
                 case (string door) when door.EndsWith("/check"):
                     Check checker = new Check(db);
-                    await checker.Room(response);
+                    await checker.Room(response, player.RoomId);
                     break;
 
                 case (string door) when door.EndsWith("/door"):
