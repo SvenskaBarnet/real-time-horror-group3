@@ -19,7 +19,7 @@ Console.CancelKeyPress += delegate (object? sender, ConsoleCancelEventArgs e)
     e.Cancel = true;
     listen = false;
 };
-    
+
 int port = 3000;
 
 HttpListener listener = new();
@@ -53,24 +53,29 @@ async void Router(HttpListenerContext context)
 {
     HttpListenerRequest request = context.Request;
     HttpListenerResponse response = context.Response;
+    Check check = new Check(db);
 
     switch (request.HttpMethod, request.Url?.AbsolutePath.ToLower())
     {
         case ("GET", string start) when start.StartsWith("/start"):
-            
+
             switch (request.Url.AbsolutePath.ToLower())
             {
-                case (string onlyStart) when onlyStart.EndsWith("/start"):
+                case (string path) when path.EndsWith("/start"):
                     IntroStory intro = new IntroStory();
                     intro.CallStory(response);
                     break;
 
-                case (string door) when door.EndsWith("/check"):
-                    Check checker = new Check(db);
-                    await checker.Room(response);
+                case (string path) when path.EndsWith("/check"):
+                    await check.Room(response);
                     break;
 
-                case (string door) when door.EndsWith("/door"):
+                case (string path) when path.EndsWith("/door"):
+                    await check.Door(response);
+                    break;
+
+                case (string path) when path.EndsWith("/window"):
+                    await check.Window(response);
                     break;
 
                 default:
@@ -92,6 +97,27 @@ async void Router(HttpListenerContext context)
 
 }
 
+void Door(HttpListenerResponse response)
+{
+    string message = "Here is a door";
+    byte[] buffer = Encoding.UTF8.GetBytes(message);
+    response.ContentType = "text/plain";
+    response.StatusCode = (int)HttpStatusCode.OK;
+
+    response.OutputStream.Write(buffer, 0, buffer.Length);
+    response.OutputStream.Close();
+}
+
+void Window(HttpListenerResponse response)
+{
+    string message = "Here is a window";
+    byte[] buffer = Encoding.UTF8.GetBytes(message);
+    response.ContentType = "text/plain";
+    response.StatusCode = (int)HttpStatusCode.OK;
+
+    response.OutputStream.Write(buffer, 0, buffer.Length);
+    response.OutputStream.Close();
+}
 void NotFound(HttpListenerResponse response)
 {
     string message = "invaild option, try \"/help\"";
