@@ -4,13 +4,14 @@ using System.Net;
 using static System.Net.Mime.MediaTypeNames;
 using System.Text;
 
+
 string dbUri = "Host=localhost;Port=5455;Username=postgres;Password=postgres;Database=NotSoHomeAlone";
 await using var db = NpgsqlDataSource.Create(dbUri);
 
-//await Database.Create(db);
+// await Database.Create(db);
 
 bool listen = true;
-
+var Check = new Check(db);
 
 Console.CancelKeyPress += delegate (object? sender, ConsoleCancelEventArgs e)
 {
@@ -18,7 +19,7 @@ Console.CancelKeyPress += delegate (object? sender, ConsoleCancelEventArgs e)
     e.Cancel = true;
     listen = false;
 };
-
+    
 int port = 3000;
 
 HttpListener listener = new();
@@ -29,7 +30,9 @@ try
     listener.Start();
     listener.BeginGetContext(new AsyncCallback(HandleRequest), listener);
     Console.WriteLine($"Server listening on port {port}");
-    while (listen) { };
+    while (listen)
+    {
+    };
 }
 finally
 {
@@ -46,29 +49,35 @@ void HandleRequest(IAsyncResult result)
     }
 }
 
-void Router(HttpListenerContext context)
+async void Router(HttpListenerContext context)
 {
     HttpListenerRequest request = context.Request;
     HttpListenerResponse response = context.Response;
 
     switch (request.HttpMethod, request.Url?.AbsolutePath.ToLower())
     {
-        case ("GET", string check) when check.StartsWith("/check"):
-
-            // skriva ut vilka alternativ som finns i rummet?
+        case ("GET", string start) when start.StartsWith("/start"):
             
-            switch(request.Url.AbsolutePath.ToLower())
+            switch (request.Url.AbsolutePath.ToLower())
             {
-                case (string door) when door.EndsWith("/door"):
-                Door(response);
-                break;
+                case (string onlyStart) when onlyStart.EndsWith("/start"):
+                    IntroStory intro = new IntroStory();
+                    intro.CallStory(response);
+                    break;
 
-            default:
-                NotFound(response);
-                break;
+                case (string door) when door.EndsWith("/check"):
+                    Check checker = new Check(db);
+                    await checker.Room(response);
+                    break;
+
+                case (string door) when door.EndsWith("/door"):
+                    break;
+
+                default:
+                    NotFound(response);
+                    break;
             }
             break;
-
         case ("GET", "/window"):
             Window(response);
             break;
@@ -118,19 +127,3 @@ void Help(HttpListenerResponse response)
     response.OutputStream.Write(buffer, 0, buffer.Length);
     response.OutputStream.Close();
 }
-
-void Check(HttpListenerResponse response)
-{
-   // hämta från databas vad som finns i rummet
-    string message = "Available path \"/door\" and \"/window\"";
-    byte[] buffer = Encoding.UTF8.GetBytes(message);
-    response.ContentType = "text/plain";
-    response.StatusCode = (int)HttpStatusCode.OK;
-
-    response.OutputStream.Write(buffer, 0, buffer.Length);
-    response.OutputStream.Close();
-}
-
-
-
-

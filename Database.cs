@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS entry_point
 (
     id serial,
     name text NOT NULL,
+    type text NOT NULL,
     room_id integer,
     is_locked boolean NOT NULL DEFAULT False,
     PRIMARY KEY (id)
@@ -31,11 +32,11 @@ INSERT INTO room(
 	VALUES ('Cabin');
 
 INSERT INTO entry_point(
-	name, room_id)
+	name, type, room_id)
 	VALUES 
-	('Window A', 1), 
-	('Window B', 1),
-	('Door A', 1);
+	('A', 'Window', 1), 
+	('B', 'Window', 1),
+	('A', 'Door', 1);
 ");
 
         await cmd.ExecuteNonQueryAsync();
