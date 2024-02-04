@@ -1,7 +1,6 @@
 ﻿using real_time_horror_group3;
 using Npgsql;
 using System.Net;
-using static System.Net.Mime.MediaTypeNames;
 using System.Text;
 
 
@@ -11,7 +10,6 @@ await using var db = NpgsqlDataSource.Create(dbUri);
 // await Database.Create(db);
 
 bool listen = true;
-var Check = new Check(db);
 
 Console.CancelKeyPress += delegate (object? sender, ConsoleCancelEventArgs e)
 {
@@ -87,6 +85,7 @@ async void Router(HttpListenerContext context)
         case ("GET", "/help"):
             Help(response);
             break;
+
         default:
             NotFound(response);
             break;
@@ -105,18 +104,6 @@ void NotFound(HttpListenerResponse response)
 
     response.StatusCode = (int)HttpStatusCode.NotFound;
     response.Close();
-}
-
-
-void Error(HttpListenerResponse response)
-{
-    string message = "Error code";
-    byte[] buffer = Encoding.UTF8.GetBytes(message);
-    response.ContentType = "text/plain";
-    response.StatusCode = (int)HttpStatusCode.OK;
-
-    response.OutputStream.Write(buffer, 0, buffer.Length);
-    response.OutputStream.Close();
 }
 
 void Help(HttpListenerResponse response)

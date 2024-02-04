@@ -7,37 +7,37 @@ public class Database
     {
 
         await using var cmd = db.CreateCommand(@"
-CREATE TABLE IF NOT EXISTS room
-(
-    id serial,
-    name text NOT NULL,
-    PRIMARY KEY (id)
-);
+        CREATE TABLE IF NOT EXISTS room
+        (
+            id serial,
+            name text NOT NULL,
+            PRIMARY KEY (id)
+        );
 
-CREATE TABLE IF NOT EXISTS entry_point
-(
-    id serial,
-    name text NOT NULL,
-    type text NOT NULL,
-    room_id integer,
-    is_locked boolean NOT NULL DEFAULT False,
-    PRIMARY KEY (id)
-);
+        CREATE TABLE IF NOT EXISTS entry_point
+        (
+            id serial,
+            name text NOT NULL,
+            type text NOT NULL,
+            room_id integer,
+            is_locked boolean NOT NULL DEFAULT False,
+            PRIMARY KEY (id)
+        );
 
-ALTER TABLE IF EXISTS entry_point
-    ADD CONSTRAINT room_id FOREIGN KEY (room_id) REFERENCES room (id); 
+        ALTER TABLE IF EXISTS entry_point
+            ADD CONSTRAINT room_id FOREIGN KEY (room_id) REFERENCES room (id); 
 
-INSERT INTO room(
-	name)
-	VALUES ('Cabin');
+        INSERT INTO room(
+        	name)
+        	VALUES ('Cabin');
 
-INSERT INTO entry_point(
-	name, type, room_id)
-	VALUES 
-	('A', 'Window', 1), 
-	('B', 'Window', 1),
-	('A', 'Door', 1);
-");
+        INSERT INTO entry_point(
+        	name, type, room_id)
+        	VALUES 
+        	('A', 'Window', 1), 
+	        ('B', 'Window', 1),
+	        ('A', 'Door', 1);
+        ");
 
         await cmd.ExecuteNonQueryAsync();
         Console.WriteLine("Created and populated DB");
