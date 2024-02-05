@@ -7,6 +7,8 @@ public class Database
     {
 
         await using var cmd = db.CreateCommand(@"
+        DROP TABLE IF EXISTS room, entry_point;
+
         CREATE TABLE IF NOT EXISTS room
         (
             id serial,
@@ -29,14 +31,19 @@ public class Database
 
         INSERT INTO room(
         	name)
-        	VALUES ('Cabin');
+        	VALUES 
+            ('Kitchen'),
+        	('Living room');
 
         INSERT INTO entry_point(
         	name, type, room_id)
         	VALUES 
         	('A', 'Window', 1), 
 	        ('B', 'Window', 1),
-	        ('A', 'Door', 1);
+	        ('A', 'Door', 1),
+            ('A', 'Window', 2),    
+            ('B', 'Window', 2),    
+            ('C', 'Window', 2);    
         ");
 
         await cmd.ExecuteNonQueryAsync();

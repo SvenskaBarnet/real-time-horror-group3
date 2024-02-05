@@ -7,11 +7,10 @@ using System.Text;
 
 public class Check(NpgsqlDataSource db)
 {
-    public async Task Room(HttpListenerResponse response)
+    public async Task Room(HttpListenerResponse response, int roomId)
     {
         await using (var cmd = db.CreateCommand())
         {
-            int roomId = 1;
             int doorCount = await CountEntryPoints(roomId, "Door");
             int windowCount = await CountEntryPoints(roomId, "Window");
 
@@ -26,9 +25,8 @@ public class Check(NpgsqlDataSource db)
         }
     }
 
-    public async Task Door(HttpListenerResponse response)
+    public async Task Door(HttpListenerResponse response, int roomId)
     {
-        int roomId = 1;
         string message = string.Empty;
 
         message += await GetStatus(roomId, "Door");
@@ -41,9 +39,8 @@ public class Check(NpgsqlDataSource db)
         response.OutputStream.Close();
     }
 
-    public async Task Window(HttpListenerResponse response)
+    public async Task Window(HttpListenerResponse response, int roomId)
     {
-        int roomId = 1;
         string message = string.Empty;
 
         message += await GetStatus(roomId, "Window");
