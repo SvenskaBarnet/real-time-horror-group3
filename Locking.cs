@@ -1,12 +1,82 @@
 ﻿using Npgsql;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace real_time_horror_group3;
 
+
+
+public class Locking
+{
+    public static async Task LockItem(string lockName)
+    {
+
+        string dbUri = "Host =localhost;Port=5455;Username=postgres;Password=postgres;Database=NotSoHomeAlone";
+        await using var db = NpgsqlDataSource.Create(dbUri);
+
+
+        await using var cmd = db.CreateCommand(@$"
+            UPDATE entry_point
+            SET is_locked = True
+            WHERE name = '{lockName}';
+        ");
+
+        await cmd.ExecuteNonQueryAsync();
+        Console.WriteLine($"{lockName} is now locked.");
+    }
+}
+
+
+
+case ("POST", string lock) when lock.StartsWith("/lock/"):
+string itemName = lock.Substring("/lock/".Length).ToLower();
+await Locking.LockItem(itemName);
+Lock(response, itemName);
+    break;
+
+
+
+
+void Lock(HttpListenerResponse response, string itemName)
+{
+    string message = $"{itemName} is now locked";
+    byte[] buffer = Encoding.UTF8.GetBytes(message);
+    response.ContentType = "text/plain";
+    response.StatusCode = (int)HttpStatusCode.OK;
+
+    response.OutputStream.Write(buffer, 0, buffer.Length);
+    response.OutputStream.Close();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
 public class Locking
 {
     public static async Task WindowA()
@@ -54,3 +124,19 @@ public class Locking
         Console.WriteLine("Door A is now locked.");
     }
 }
+
+
+
+
+void LockWindowAResponse(HttpListenerResponse response)
+{
+    string message = "Window A is now locked";  /// Ändra så ${window} visar vilken jag valt.
+    byte[] buffer = Encoding.UTF8.GetBytes(message);
+    response.ContentType = "text/plain";
+    response.StatusCode = (int)HttpStatusCode.OK;
+
+    response.OutputStream.Write(buffer, 0, buffer.Length);
+    response.OutputStream.Close();
+}
+
+*/
