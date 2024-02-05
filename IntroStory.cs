@@ -24,6 +24,7 @@ Check every room in the house carefully.
 Events could happen anytime.
 You need to continue to check the status in every room during your remaining time period.";
 
+        
         foreach (char character in message)
         {
             byte[] bytes = Encoding.UTF8.GetBytes(character.ToString());

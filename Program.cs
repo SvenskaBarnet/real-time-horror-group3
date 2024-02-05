@@ -52,15 +52,26 @@ async void Router(HttpListenerContext context)
     HttpListenerRequest request = context.Request;
     HttpListenerResponse response = context.Response;
     Check check = new Check(db);
+    StartMenu startMenu = new StartMenu();
+    IntroStory intro = new IntroStory();
+
 
     switch (request.Url?.AbsolutePath.ToLower())
     {
-        case (string path) when path.Equals("/start"):
+        case (string path) when path.Equals("/startmenu"):
             if (request.HttpMethod is "GET")
             {
-                IntroStory intro = new IntroStory();
+                startMenu.ShowStartMenu(response);
+            }
+            
+            break;
+        
+        case (string path) when path.Equals("/startmenu/start"):
+            if (request.HttpMethod is "GET")
+            {
                 intro.CallStory(response);
             }
+            
             break;
 
         case (string path) when path.Equals("/kitchen/check"):
