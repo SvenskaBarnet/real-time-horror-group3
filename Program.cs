@@ -64,11 +64,19 @@ async void Router(HttpListenerContext context)
                     intro.CallStory(response);
                     break;
 
-                case (string path) when path.EndsWith("/check"):
+                case (string path) when path.EndsWith("/livingroom/check"):
+                    await check.Room(response);
+                    break;
+
+                case (string path) when path.EndsWith("/kitchen/check"):
                     await check.Room(response);
                     break;
 
                 case (string path) when path.EndsWith("/livingroom/door"):
+                    await check.Door(response);
+                    break;
+
+                case (string path) when path.EndsWith("/kitchen/door"):
                     await check.Door(response);
                     break;
 
