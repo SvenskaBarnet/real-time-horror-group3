@@ -94,29 +94,53 @@ async void Router(HttpListenerContext context)
             {
                 await check.Door(response, 1);
             }
+            else if (request.HttpMethod is "PATCH")
+            {
+                Locking locking = new(db);
+                await locking.Lock("Door", 1, request, response);
+            }
             break;
 
-        case (string path) when path.Equals("/livingroom/door"):
+        case (string path) when path.Equals("/livingroom/door/"):
 
             if (request.HttpMethod is "GET")
             {
                 await check.Door(response, 2);
             }
+            else if (request.HttpMethod is "PATCH")
+            {
+                Locking locking = new(db);
+                await locking.Lock("Door", 2, request, response);
+            }
+
             break;
 
-        case (string path) when path.Equals("/kitchen/window"):
+        case (string path) when path.Equals("/kitchen/window/"):
             if (request.HttpMethod is "GET")
             {
                 await check.Window(response, 1);
             }
+            else if (request.HttpMethod is "PATCH")
+            {
+                Locking locking = new(db);
+                await locking.Lock("Window", 1, request, response);
+            }
             break;
+          
 
-        case (string path) when path.Equals("/livingroom/window"):
+        case (string path) when path.Equals("/livingroom/window/"):
             if (request.HttpMethod is "GET")
             {
                 await check.Window(response, 2);
             }
+            else if (request.HttpMethod is "PATCH")
+            {
+                Locking locking = new(db);
+                await locking.Lock("Window", 2, request, response);
+            }
             break;
+
+           
 
         case (string path) when path.Equals("/help"):
             if (request.HttpMethod is "GET")
@@ -128,6 +152,7 @@ async void Router(HttpListenerContext context)
         default:
             NotFound(response);
             break;
+
     }
 
 }
@@ -155,3 +180,6 @@ void Help(HttpListenerResponse response)
     response.OutputStream.Write(buffer, 0, buffer.Length);
     response.OutputStream.Close();
 }
+
+
+
