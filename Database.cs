@@ -40,7 +40,10 @@ public class Database
         	VALUES 
         	('A', 'Window', 1), 
 	        ('B', 'Window', 1),
-	        ('A', 'Door', 1);
+	        ('A', 'Door', 1),
+            ('A', 'Window', 2),    
+            ('B', 'Window', 2),    
+            ('C', 'Window', 2);    
         ");
 
         await cmd.ExecuteNonQueryAsync();

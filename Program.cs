@@ -63,25 +63,47 @@ async void Router(HttpListenerContext context)
             }
             break;
 
-        case (string path) when path.Equals("/check"):
+        case (string path) when path.Equals("/kitchen/check"):
             if (request.HttpMethod is "GET")
             {
-                await check.Room(response);
+                await check.Room(response, 1);
             }
             break;
 
-        case (string path) when path.Equals("/door"):
-
+        case (string path) when path.Equals("/livingroom/check"):
             if (request.HttpMethod is "GET")
             {
-                await check.Door(response);
+                await check.Room(response, 2);
             }
             break;
 
-        case (string path) when path.Equals("/window"):
+        case (string path) when path.Equals("/kitchen/door"):
+
             if (request.HttpMethod is "GET")
             {
-                await check.Window(response);
+                await check.Door(response, 1);
+            }
+            break;
+
+        case (string path) when path.Equals("/livingroom/door"):
+
+            if (request.HttpMethod is "GET")
+            {
+                await check.Door(response, 2);
+            }
+            break;
+
+        case (string path) when path.Equals("/kitchen/window"):
+            if (request.HttpMethod is "GET")
+            {
+                await check.Window(response, 1);
+            }
+            break;
+
+        case (string path) when path.Equals("/livingroom/window"):
+            if (request.HttpMethod is "GET")
+            {
+                await check.Window(response, 2);
             }
             break;
 
