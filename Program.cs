@@ -1,16 +1,15 @@
 ﻿using real_time_horror_group3;
 using Npgsql;
 using System.Net;
-using static System.Net.Mime.MediaTypeNames;
 using System.Text;
+
 
 string dbUri = "Host=localhost;Port=5455;Username=postgres;Password=postgres;Database=NotSoHomeAlone";
 await using var db = NpgsqlDataSource.Create(dbUri);
 
-//await Database.Create(db);
+await Database.Create(db);
 
 bool listen = true;
-
 
 Console.CancelKeyPress += delegate (object? sender, ConsoleCancelEventArgs e)
 {
@@ -29,7 +28,9 @@ try
     listener.Start();
     listener.BeginGetContext(new AsyncCallback(HandleRequest), listener);
     Console.WriteLine($"Server listening on port {port}");
-    while (listen) { };
+    while (listen)
+    {
+    };
 }
 finally
 {
@@ -46,36 +47,73 @@ void HandleRequest(IAsyncResult result)
     }
 }
 
-void Router(HttpListenerContext context)
+async void Router(HttpListenerContext context)
 {
     HttpListenerRequest request = context.Request;
     HttpListenerResponse response = context.Response;
+    Check check = new Check(db);
 
-    switch (request.HttpMethod, request.Url?.AbsolutePath.ToLower())
+    switch (request.Url?.AbsolutePath.ToLower())
     {
-        case ("GET", string check) when check.StartsWith("/check"):
-
-            // skriva ut vilka alternativ som finns i rummet?
-            
-            switch(request.Url.AbsolutePath.ToLower())
+        case (string path) when path.Equals("/start"):
+            if (request.HttpMethod is "GET")
             {
-                case (string door) when door.EndsWith("/door"):
-                Door(response);
-                break;
-
-            default:
-                NotFound(response);
-                break;
+                IntroStory intro = new IntroStory();
+                intro.CallStory(response);
             }
             break;
 
-        case ("GET", "/window"):
-            Window(response);
+        case (string path) when path.Equals("/kitchen/check"):
+            if (request.HttpMethod is "GET")
+            {
+                await check.Room(response, 1);
+            }
             break;
 
-        case ("GET", "/help"):
-            Help(response);
+        case (string path) when path.Equals("/livingroom/check"):
+            if (request.HttpMethod is "GET")
+            {
+                await check.Room(response, 2);
+            }
             break;
+
+        case (string path) when path.Equals("/kitchen/door"):
+
+            if (request.HttpMethod is "GET")
+            {
+                await check.Door(response, 1);
+            }
+            break;
+
+        case (string path) when path.Equals("/livingroom/door"):
+
+            if (request.HttpMethod is "GET")
+            {
+                await check.Door(response, 2);
+            }
+            break;
+
+        case (string path) when path.Equals("/kitchen/window"):
+            if (request.HttpMethod is "GET")
+            {
+                await check.Window(response, 1);
+            }
+            break;
+
+        case (string path) when path.Equals("/livingroom/window"):
+            if (request.HttpMethod is "GET")
+            {
+                await check.Window(response, 2);
+            }
+            break;
+
+        case (string path) when path.Equals("/help"):
+            if (request.HttpMethod is "GET")
+            {
+                Help(response);
+            }
+            break;
+
         default:
             NotFound(response);
             break;
@@ -101,39 +139,6 @@ void NotFound(HttpListenerResponse response)
     response.Close();
 }
 
-void Door(HttpListenerResponse response)
-{
-    string message = "Here is a door";
-    byte[] buffer = Encoding.UTF8.GetBytes(message);
-    response.ContentType = "text/plain";
-    response.StatusCode = (int)HttpStatusCode.OK;
-
-    response.OutputStream.Write(buffer, 0, buffer.Length);
-    response.OutputStream.Close();
-}
-
-void Window(HttpListenerResponse response)
-{
-    string message = "Here is a window";
-    byte[] buffer = Encoding.UTF8.GetBytes(message);
-    response.ContentType = "text/plain";
-    response.StatusCode = (int)HttpStatusCode.OK;
-
-    response.OutputStream.Write(buffer, 0, buffer.Length);
-    response.OutputStream.Close();
-}
-
-void Error(HttpListenerResponse response)
-{
-    string message = "Error code";
-    byte[] buffer = Encoding.UTF8.GetBytes(message);
-    response.ContentType = "text/plain";
-    response.StatusCode = (int)HttpStatusCode.OK;
-
-    response.OutputStream.Write(buffer, 0, buffer.Length);
-    response.OutputStream.Close();
-}
-
 void Help(HttpListenerResponse response)
 {
     string message = "Available path \"/door\" and \"/window\"";
@@ -145,15 +150,6 @@ void Help(HttpListenerResponse response)
     response.OutputStream.Close();
 }
 
-void Check(HttpListenerResponse response)
-{
-   // hämta från databas vad som finns i rummet
-    string message = "Available path \"/door\" and \"/window\"";
-    byte[] buffer = Encoding.UTF8.GetBytes(message);
-    response.ContentType = "text/plain";
-    response.StatusCode = (int)HttpStatusCode.OK;
 
-    response.OutputStream.Write(buffer, 0, buffer.Length);
-    response.OutputStream.Close();
-}
+
 
