@@ -13,7 +13,7 @@ namespace real_time_horror_group3;
 
 public class Locking
 {
-    public static async Task LockItem(string lockName)
+    public static async Task Lock(string lockName)
     {
 
         string dbUri = "Host =localhost;Port=5455;Username=postgres;Password=postgres;Database=NotSoHomeAlone";
@@ -30,49 +30,6 @@ public class Locking
         Console.WriteLine($"{lockName} is now locked.");
     }
 }
-
-
-
-case ("POST", string lock) when lock.StartsWith("/lock/"):
-string itemName = lock.Substring("/lock/".Length).ToLower();
-await Locking.LockItem(itemName);
-Lock(response, itemName);
-    break;
-
-
-
-
-void Lock(HttpListenerResponse response, string itemName)
-{
-    string message = $"{itemName} is now locked";
-    byte[] buffer = Encoding.UTF8.GetBytes(message);
-    response.ContentType = "text/plain";
-    response.StatusCode = (int)HttpStatusCode.OK;
-
-    response.OutputStream.Write(buffer, 0, buffer.Length);
-    response.OutputStream.Close();
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -128,9 +85,9 @@ public class Locking
 
 
 
-void LockWindowAResponse(HttpListenerResponse response)
+void Lock(HttpListenerResponse response, string itemName)
 {
-    string message = "Window A is now locked";  /// Ändra så ${window} visar vilken jag valt.
+    string message = $"{itemName} is now locked";
     byte[] buffer = Encoding.UTF8.GetBytes(message);
     response.ContentType = "text/plain";
     response.StatusCode = (int)HttpStatusCode.OK;

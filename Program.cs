@@ -107,6 +107,16 @@ async void Router(HttpListenerContext context)
             }
             break;
 
+
+        case (string path) when path.Equals("/lock/"):
+            if (request.HttpMethod is "POST")
+            {
+                string itemName = path.Substring("/lock/".Length).ToLower();
+                await Locking.Lock(itemName);
+                Lock(response, itemName);
+            }
+            break;
+
         case (string path) when path.Equals("/help"):
             if (request.HttpMethod is "GET")
             {
@@ -142,6 +152,17 @@ void NotFound(HttpListenerResponse response)
 void Help(HttpListenerResponse response)
 {
     string message = "Available path \"/door\" and \"/window\"";
+    byte[] buffer = Encoding.UTF8.GetBytes(message);
+    response.ContentType = "text/plain";
+    response.StatusCode = (int)HttpStatusCode.OK;
+
+    response.OutputStream.Write(buffer, 0, buffer.Length);
+    response.OutputStream.Close();
+}
+
+void Lock(HttpListenerResponse response, string itemName)
+{
+    string message = $"{itemName} is now locked";
     byte[] buffer = Encoding.UTF8.GetBytes(message);
     response.ContentType = "text/plain";
     response.StatusCode = (int)HttpStatusCode.OK;
