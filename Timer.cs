@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
@@ -10,40 +11,62 @@ namespace real_time_horror_group3;
 
 public class Timers
 {
-    int second = 59;
-    int minute = 29;
-    
-    
-    System.Timers.Timer gameSession = new(1000);
-    public void GameSession()
-    {
-        // Attach the Tick method to the Elapsed event
-        gameSession.Elapsed += Tick;
-        // Enable the Timer
-        gameSession.Enabled = true;
+    DateTime? gameStartTime = null;
+    TimeSpan gameTimeLimit = TimeSpan.FromSeconds(30);
 
-    }
-    // gör detta till en curl kommando för att se hur mycket tid som är kvar
-    public void Tick(Object timeCounter, ElapsedEventArgs elapsedTime)
+    public bool GameStarted()
     {
-        
-        Console.WriteLine($"Time left:{minute}:{second}"); 
-        
-        second--;
-        if(minute == 0 && second == 0)
+        return gameStartTime.HasValue;
+    }
+
+    public void StartGame()
+    {
+        if (gameStartTime == null)
         {
-            Console.WriteLine("Out of time: Game over");
-            gameSession.Enabled = false;
+            gameStartTime = DateTime.Now;
 
         }
-        if(second == 0)
+        else
         {
-            minute--;
-            second = 59;
-
+            throw new InvalidOperationException("The game has already started.");
         }
-        
     }
-    
 
+    public void CheckTimeLeft(HttpListenerResponse response)
+    {
+        if (gameStartTime.HasValue)
+        {
+            DateTime currentTime = DateTime.Now;
+            TimeSpan elapsedTime = currentTime - gameStartTime.Value;
+            TimeSpan timeLeft = gameTimeLimit - elapsedTime;
+
+            if (timeLeft <= TimeSpan.Zero)
+            {
+                string message = "Game over. Time limit exceeded.";
+                byte[] buffer = Encoding.UTF8.GetBytes(message);
+                response.ContentType = "text/plain";
+                response.StatusCode = (int)HttpStatusCode.OK;
+                response.OutputStream.Write(buffer, 0, buffer.Length);
+                response.OutputStream.Close();
+            }
+            else
+            {
+                string message = $"Time left: {timeLeft.TotalMinutes:F2} minutes";
+                byte[] buffer = Encoding.UTF8.GetBytes(message);
+                response.ContentType = "text/plain";
+                response.StatusCode = (int)HttpStatusCode.OK;
+                response.OutputStream.Write(buffer, 0, buffer.Length);
+                response.OutputStream.Close();
+            }
+        }
+        else
+        {
+            string message = "Game has not started yet.";
+            byte[] buffer = Encoding.UTF8.GetBytes(message);
+            response.ContentType = "text/plain";
+            response.StatusCode = (int)HttpStatusCode.OK;
+            response.OutputStream.Write(buffer, 0, buffer.Length);
+            response.OutputStream.Close();
+        }
+    }
 }

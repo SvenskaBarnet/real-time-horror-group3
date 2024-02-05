@@ -11,6 +11,8 @@ await Database.Create(db);
 
 bool listen = true;
 
+Timers timers = new Timers();
+
 Console.CancelKeyPress += delegate (object? sender, ConsoleCancelEventArgs e)
 {
     Console.WriteLine("Interupting cancel event");
@@ -49,6 +51,7 @@ void HandleRequest(IAsyncResult result)
 
 async void Router(HttpListenerContext context)
 {
+
     HttpListenerRequest request = context.Request;
     HttpListenerResponse response = context.Response;
     Check check = new Check(db);
@@ -58,10 +61,41 @@ async void Router(HttpListenerContext context)
         case (string path) when path.Equals("/start"):
             if (request.HttpMethod is "GET")
             {
-                IntroStory intro = new IntroStory();
-                intro.CallStory(response);
+                if (!timers.GameStarted())
+                {
+                    timers.StartGame();
+
+
+                    string startMessage = "The game has started! You have 30 minutes to survive.";
+                    byte[] startBuffer = Encoding.UTF8.GetBytes(startMessage);
+                    response.ContentType = "text/plain";
+                    response.StatusCode = (int)HttpStatusCode.OK;
+                    response.OutputStream.Write(startBuffer, 0, startBuffer.Length);
+                    response.OutputStream.Close();
+
+                    //IntroStory intro = new IntroStory();
+                    //intro.CallStory(response);
+                }
+                else
+                {
+                    string message = "The game has already started.";
+                    byte[] buffer = Encoding.UTF8.GetBytes(message);
+                    response.ContentType = "text/plain";
+                    response.StatusCode = (int)HttpStatusCode.OK;
+                    response.OutputStream.Write(buffer, 0, buffer.Length);
+                    response.OutputStream.Close();
+                }
             }
             break;
+
+        case (string path) when path.Equals("/timeleft"):
+            if (request.HttpMethod is "GET")
+            {
+                timers.CheckTimeLeft(response);
+            }
+            break;
+
+     
 
         case (string path) when path.Equals("/kitchen/check"):
             if (request.HttpMethod is "GET")
