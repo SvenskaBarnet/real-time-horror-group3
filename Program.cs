@@ -53,37 +53,43 @@ async void Router(HttpListenerContext context)
     HttpListenerResponse response = context.Response;
     Check check = new Check(db);
 
-    switch (request.HttpMethod, request.Url?.AbsolutePath.ToLower())
+    switch (request.Url?.AbsolutePath.ToLower())
     {
-        case ("GET", string start) when start.StartsWith("/start"):
-
-            switch (request.Url.AbsolutePath.ToLower())
+        case (string path) when path.Equals("/start"):
+            if (request.HttpMethod is "GET")
             {
-                case (string path) when path.EndsWith("/start"):
-                    IntroStory intro = new IntroStory();
-                    intro.CallStory(response);
-                    break;
-
-                case (string path) when path.EndsWith("/check"):
-                    await check.Room(response);
-                    break;
-
-                case (string path) when path.EndsWith("/door"):
-                    await check.Door(response);
-                    break;
-
-                case (string path) when path.EndsWith("/window"):
-                    await check.Window(response);
-                    break;
-
-                default:
-                    NotFound(response);
-                    break;
+                IntroStory intro = new IntroStory();
+                intro.CallStory(response);
             }
             break;
 
-        case ("GET", "/help"):
-            Help(response);
+        case (string path) when path.Equals("/check"):
+            if (request.HttpMethod is "GET")
+            {
+                await check.Room(response);
+            }
+            break;
+
+        case (string path) when path.Equals("/door"):
+
+            if (request.HttpMethod is "GET")
+            {
+                await check.Door(response);
+            }
+            break;
+
+        case (string path) when path.Equals("/window"):
+            if (request.HttpMethod is "GET")
+            {
+                await check.Window(response);
+            }
+            break;
+
+        case (string path) when path.Equals("/help"):
+            if (request.HttpMethod is "GET")
+            {
+                Help(response);
+            }
             break;
 
         default:
