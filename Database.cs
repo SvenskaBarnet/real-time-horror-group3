@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS public.room
 (
     id serial,
     name text NOT NULL,
+    has_danger boolean NOT NULL DEFAULT false,
     PRIMARY KEY (id)
 );
 
@@ -22,14 +23,6 @@ CREATE TABLE IF NOT EXISTS public.entry_point
     is_locked boolean NOT NULL DEFAULT false,
     room_id integer NOT NULL,
     ""time"" timestamp without time zone,
-    PRIMARY KEY (id)
-);
-
-CREATE TABLE IF NOT EXISTS public.danger
-(
-    id serial,
-    type text NOT NULL,
-    room_id integer NOT NULL,
     PRIMARY KEY (id)
 );
 
@@ -53,15 +46,31 @@ ALTER TABLE IF EXISTS public.entry_point
     ADD CONSTRAINT room_id FOREIGN KEY (room_id)
     REFERENCES public.room (id);
 
-
-ALTER TABLE IF EXISTS public.danger
-    ADD CONSTRAINT room_id FOREIGN KEY (room_id)
-    REFERENCES public.room (id);
-
-
 ALTER TABLE IF EXISTS public.player
     ADD CONSTRAINT location FOREIGN KEY (location)
     REFERENCES public.room (id);
+
+INSERT INTO public.room(
+	name)
+	VALUES 
+	('Kitchen'),
+	('Hallway'),
+	('Living room');
+
+INSERT INTO public.entry_point
+(name, type, room_id)
+VALUES
+	('A', 'Door', 1),
+	('A', 'Window', 1),
+	('B', 'Window', 1),
+	('A', 'Door', 2),
+	('A', 'Window', 2),
+	('B', 'Window', 2),
+	('A', 'Door', 3),
+	('A', 'Window', 3),
+	('B', 'Window', 3);
+
+
 
 ");
 
