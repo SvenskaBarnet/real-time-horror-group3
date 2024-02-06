@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.Metrics;
 using System.Net;
+using System.Text;
 using Npgsql;
 using real_time_horror_group3;
 
@@ -12,7 +13,7 @@ await database.Create();
 bool listen = true;
 string? message = string.Empty;
 
-Console.CancelKeyPress += delegate (object? sender, ConsoleCancelEventArgs e) // när vi trycker på crtl+C så avbryt eventet.
+Console.CancelKeyPress += delegate (object? sender, ConsoleCancelEventArgs e) 
 {
     Console.WriteLine("Interuping cancel event");
     e.Cancel = true;
@@ -26,7 +27,7 @@ listener.Prefixes.Add($"http://localhost:{port}/");
 listener.Start();
 Console.WriteLine($"Server listening on port: {port}");
 
-listener.BeginGetContext(new AsyncCallback(Router), listener); // låter vår Startar en egen "bubbla" som kan hantera vår request(router), state = listener "state" en låda som kan skicka runt och titta i den och ha tillgång till den
+listener.BeginGetContext(new AsyncCallback(Router), listener); 
 while (listen)
 {
 
@@ -38,5 +39,26 @@ Console.WriteLine("Server stopped");
 
 async void Router(IAsyncResult result)
 {
+    if(result.AsyncState is HttpListener listener)
+    {
+        HttpListenerContext context = listener.EndGetContext(result);
+        HttpListenerResponse response = context.Response;
+        HttpListenerRequest request = context.Request;
 
+        response.ContentType = "text/plain";
+
+        switch (request.Url?.AbsolutePath.ToLower())
+        {
+            default:
+                message = "Not Found";
+                response.StatusCode = (int)HttpStatusCode.NotFound;
+                break;
+        }
+        
+        byte[] buffer = Encoding.UTF8.GetBytes(message);
+        response.OutputStream.Write(buffer);
+        response.OutputStream.Close();
+
+        listener.BeginGetContext(new AsyncCallback(Router), listener);
+    }
 }
