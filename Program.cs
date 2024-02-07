@@ -49,6 +49,13 @@ async void Router(IAsyncResult result)
 
         switch (request.Url?.AbsolutePath.ToLower())
         {
+            case "/new-player":
+                if (request.HttpMethod is "POST")
+                {
+                    Player player = new Player(db);
+                    message = await player.Create(request, response);
+                }
+                break;
             default:
                 message = "Not Found";
                 response.StatusCode = (int)HttpStatusCode.NotFound;
