@@ -49,12 +49,20 @@ async void Router(IAsyncResult result)
 
         switch (request.Url?.AbsolutePath.ToLower())
         {
+
+            case "/new-player":
+                if (request.HttpMethod is "POST")
+                {
+                    Player player = new Player(db);
+                    message = await player.Create(request, response);
+
             case "/new-session":
                 Session session = new(db);
 
                 if (request.HttpMethod is "GET")
                 {
                     message = await session.Start(response);
+
                 }
                 break;
             default:
