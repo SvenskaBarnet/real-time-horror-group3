@@ -48,10 +48,10 @@ async void Router(IAsyncResult result)
 
         response.ContentType = "text/plain";
         Player player = new(db);
+        Check check = new(db);
 
         switch (request.Url?.AbsolutePath.ToLower())
         {
-
             case (string path) when path == "/new-player":
                 if (request.HttpMethod is "POST")
                 {
@@ -64,6 +64,12 @@ async void Router(IAsyncResult result)
                     message = await player.Move(request, response);
                 }
                 break;
+            case (string path) when path == $"/{await player.Verify(request, response)}/check-windows":
+                if (request.HttpMethod is "GET")
+                {
+                    message = await check.Windows(request, response, player); 
+                }
+                break;
 
             case "/new-session":
                 Session session = new(db);
@@ -71,8 +77,6 @@ async void Router(IAsyncResult result)
                 if (request.HttpMethod is "GET")
                 {
                     message = await session.Start(response);
-
-
                 }
                 break;
             default:
@@ -84,6 +88,7 @@ async void Router(IAsyncResult result)
         byte[] buffer = Encoding.UTF8.GetBytes(message);
         response.OutputStream.Write(buffer);
         response.OutputStream.Close();
+        message = string.Empty;
 
         listener.BeginGetContext(new AsyncCallback(Router), listener);
     }
