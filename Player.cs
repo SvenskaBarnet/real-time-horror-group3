@@ -69,6 +69,7 @@ public class Player(NpgsqlDataSource db)
             ");
         cmd.Parameters.AddWithValue(name ?? string.Empty);
         var reader = await cmd.ExecuteReaderAsync();
+
         string username = string.Empty;
         if(await reader.ReadAsync())
         {
