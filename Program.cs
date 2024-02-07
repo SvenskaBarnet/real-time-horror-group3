@@ -62,6 +62,8 @@ async void Router(IAsyncResult result)
                 if (request.HttpMethod is "PATCH")
                 {
                     message = await player.Move(request, response);
+                }
+                break;
 
             case "/new-session":
                 Session session = new(db);
