@@ -88,4 +88,52 @@ public class Check(NpgsqlDataSource db)
         response.StatusCode = (int)HttpStatusCode.OK;
         return message;
     }
+
+    public async Task<string> EntryPoints(HttpListenerRequest request, HttpListenerResponse response, string playerName)
+    {
+        await using var playerPos = db.CreateCommand(@"
+            SELECT p.location, r.name
+            FROM public.player p
+            JOIN public.room r ON r.id = p.location
+            WHERE p.name = $1;
+            ");
+
+        playerPos.Parameters.AddWithValue(playerName ?? string.Empty);
+        var reader1 = await playerPos.ExecuteReaderAsync();
+
+        int roomId = 0;
+        string roomName = string.Empty;
+        if(await reader1.ReadAsync())
+        {
+            roomId = reader1.GetInt32(0);
+            roomName = reader1.GetString(1);
+        }
+
+        int doors = await GetEntries(roomId, "Door");
+        int windows = await GetEntries(roomId, "Window");
+
+        string message = $"Your are in the {roomName}. \nThere is {doors} door(s) and {windows} window(s).";
+
+        return message;
+    }
+
+    async Task<int> GetEntries(int roomId, string type)
+    {
+        await using var entryPoints = db.CreateCommand(@"
+            SELECT COUNT(type) 
+            FROM entry_point
+            WHERE room_id = $1 AND type = $2;
+            ");
+        entryPoints.Parameters.AddWithValue(roomId);
+        entryPoints.Parameters.AddWithValue(type);
+        var reader2 = await entryPoints.ExecuteReaderAsync();
+
+        int count = 0;
+        while(await reader2.ReadAsync())
+        {
+            count = reader2.GetInt32(0);
+        }
+
+        return count;
+    }
 }
