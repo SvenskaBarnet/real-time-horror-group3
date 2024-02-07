@@ -23,6 +23,7 @@ public class Player(NpgsqlDataSource db)
 
         return message;
     }
+
     public async Task<string> Move(HttpListenerRequest request, HttpListenerResponse response)
         
     {
@@ -76,4 +77,5 @@ public class Player(NpgsqlDataSource db)
         }
         return username;
     }
+
 }

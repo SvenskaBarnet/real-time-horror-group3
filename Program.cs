@@ -51,6 +51,7 @@ async void Router(IAsyncResult result)
 
         switch (request.Url?.AbsolutePath.ToLower())
         {
+
             case (string path) when path == "/new-player":
                 if (request.HttpMethod is "POST")
                 {
@@ -61,6 +62,15 @@ async void Router(IAsyncResult result)
                 if (request.HttpMethod is "PATCH")
                 {
                     message = await player.Move(request, response);
+
+            case "/new-session":
+                Session session = new(db);
+
+                if (request.HttpMethod is "GET")
+                {
+                    message = await session.Start(response);
+
+
                 }
                 break;
             default:
