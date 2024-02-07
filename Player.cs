@@ -61,7 +61,6 @@ public class Player(NpgsqlDataSource db)
     {
         string? path = request.Url?.AbsolutePath;
         string? name = path?.Split('/')[1];
-        await Console.Out.WriteLineAsync(name);
 
         await using var cmd = db.CreateCommand(@"
             SELECT (name)

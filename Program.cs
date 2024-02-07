@@ -16,7 +16,7 @@ string? message = string.Empty;
 
 Console.CancelKeyPress += delegate (object? sender, ConsoleCancelEventArgs e)
 {
-    Console.WriteLine("Interuping cancel event");
+    Console.WriteLine("Interupting cancel event");
     e.Cancel = true;
     listen = false;
 };
