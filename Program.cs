@@ -70,6 +70,12 @@ async void Router(IAsyncResult result)
                     message = await check.Windows(request, response, player); 
                 }
                 break;
+            case (string path) when path == $"/{await player.Verify(request, response)}/check-doors":
+                if (request.HttpMethod is "GET")
+                {
+                    message = await check.Doors(request, response, player); 
+                }
+                break;
 
             case "/new-session":
                 Session session = new(db);
