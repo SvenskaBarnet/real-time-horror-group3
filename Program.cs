@@ -13,7 +13,7 @@ await database.Create();
 bool listen = true;
 string? message = string.Empty;
 
-Console.CancelKeyPress += delegate (object? sender, ConsoleCancelEventArgs e) 
+Console.CancelKeyPress += delegate (object? sender, ConsoleCancelEventArgs e)
 {
     Console.WriteLine("Interuping cancel event");
     e.Cancel = true;
@@ -27,7 +27,7 @@ listener.Prefixes.Add($"http://localhost:{port}/");
 listener.Start();
 Console.WriteLine($"Server listening on port: {port}");
 
-listener.BeginGetContext(new AsyncCallback(Router), listener); 
+listener.BeginGetContext(new AsyncCallback(Router), listener);
 while (listen)
 {
 
@@ -39,7 +39,7 @@ Console.WriteLine("Server stopped");
 
 async void Router(IAsyncResult result)
 {
-    if(result.AsyncState is HttpListener listener)
+    if (result.AsyncState is HttpListener listener)
     {
         HttpListenerContext context = listener.EndGetContext(result);
         HttpListenerResponse response = context.Response;
@@ -49,11 +49,20 @@ async void Router(IAsyncResult result)
 
         switch (request.Url?.AbsolutePath.ToLower())
         {
+
             case "/new-player":
                 if (request.HttpMethod is "POST")
                 {
                     Player player = new Player(db);
                     message = await player.Create(request, response);
+
+            case "/new-session":
+                Session session = new(db);
+
+                if (request.HttpMethod is "GET")
+                {
+                    message = await session.Start(response);
+
                 }
                 break;
             default:
@@ -61,7 +70,7 @@ async void Router(IAsyncResult result)
                 response.StatusCode = (int)HttpStatusCode.NotFound;
                 break;
         }
-        
+
         byte[] buffer = Encoding.UTF8.GetBytes(message);
         response.OutputStream.Write(buffer);
         response.OutputStream.Close();
