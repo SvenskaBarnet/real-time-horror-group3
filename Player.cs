@@ -23,4 +23,59 @@ public class Player(NpgsqlDataSource db)
 
         return message;
     }
+
+    public async Task<string> Move(HttpListenerRequest request, HttpListenerResponse response)
+        
+    {
+        StreamReader reader = new(request.InputStream, request.ContentEncoding);
+        string roomName = reader.ReadToEnd();
+        int room = 0;
+        switch (roomName.ToLower())
+        {
+            case "kitchen":
+                room = 1;
+                break;
+            case "hallway":
+                room = 2;
+                break;
+            case "living room":
+                room = 3;
+                break;
+        }
+
+        await using var cmd = db.CreateCommand(@"
+                        UPDATE public.player
+                        SET location = $1
+                        WHERE name = $2;
+                        ");
+        cmd.Parameters.AddWithValue(room);
+        cmd.Parameters.AddWithValue(await Verify(request, response));
+
+        await cmd.ExecuteNonQueryAsync();
+        response.StatusCode = (int)HttpStatusCode.OK;
+        string message = $"Moved to {roomName}";
+
+        return message;
+    }
+    public async Task<string> Verify(HttpListenerRequest request, HttpListenerResponse response)
+    {
+        string? path = request.Url?.AbsolutePath;
+        string? name = path?.Split('/')[1];
+        await Console.Out.WriteLineAsync(name);
+
+        await using var cmd = db.CreateCommand(@"
+            SELECT (name)
+            FROM public.player
+            WHERE name = $1
+            ");
+        cmd.Parameters.AddWithValue(name ?? string.Empty);
+        var reader = await cmd.ExecuteReaderAsync();
+        string username = string.Empty;
+        if(await reader.ReadAsync())
+        {
+            username = reader.GetString(0);
+        }
+        return username;
+    }
+
 }

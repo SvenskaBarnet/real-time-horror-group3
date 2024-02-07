@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.Metrics;
 using System.Net;
+using System.Security.Cryptography;
 using System.Text;
 using Npgsql;
 using real_time_horror_group3;
@@ -46,15 +47,21 @@ async void Router(IAsyncResult result)
         HttpListenerRequest request = context.Request;
 
         response.ContentType = "text/plain";
+        Player player = new(db);
 
         switch (request.Url?.AbsolutePath.ToLower())
         {
 
-            case "/new-player":
+            case (string path) when path == "/new-player":
                 if (request.HttpMethod is "POST")
                 {
-                    Player player = new Player(db);
                     message = await player.Create(request, response);
+                }
+                break;
+            case (string path) when path == $"/{await player.Verify(request, response)}/move":
+                if (request.HttpMethod is "PATCH")
+                {
+                    message = await player.Move(request, response);
 
             case "/new-session":
                 Session session = new(db);
@@ -62,6 +69,7 @@ async void Router(IAsyncResult result)
                 if (request.HttpMethod is "GET")
                 {
                     message = await session.Start(response);
+
 
                 }
                 break;
@@ -77,4 +85,5 @@ async void Router(IAsyncResult result)
 
         listener.BeginGetContext(new AsyncCallback(Router), listener);
     }
+
 }
