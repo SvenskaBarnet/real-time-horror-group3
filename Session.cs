@@ -40,4 +40,14 @@ public class Session(NpgsqlDataSource db)
         return message;
     }
    
+    public async Task<string> EntryPointTimer (HttpListenerResponse response)
+    {
+        string message = string.Empty;
+        await using var select = db.CreateCommand(@"
+                        SELECT COUNT(id)
+                        FROM public.session
+                        ");
+
+        return message;
+    }
 }
