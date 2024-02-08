@@ -49,6 +49,7 @@ async void Router(IAsyncResult result)
         response.ContentType = "text/plain";
         Player player = new(db);
         Check check = new(db);
+        PlayerAction action = new(db);
 
         switch (request.Url?.AbsolutePath.ToLower())
         {
@@ -67,23 +68,21 @@ async void Router(IAsyncResult result)
             case (string path) when path == $"/{await player.Verify(request, response)}/windows":
                 if (request.HttpMethod is "GET")
                 {
-                    message = await check.Windows(request, response, player); 
+                    message = await check.Windows(request, response, player);
                 }
                 else if (request.HttpMethod is "PATCH")
                 {
-                    Locking locking = new(db);
-                    message = await locking.Lock("Window", check, player, request, response);
+                    message = await action.Lock("Window", check, player, request, response);
                 }
                 break;
             case (string path) when path == $"/{await player.Verify(request, response)}/doors":
                 if (request.HttpMethod is "GET")
                 {
-                    message = await check.Doors(request, response, player); 
+                    message = await check.Doors(request, response, player);
                 }
                 else if (request.HttpMethod is "PATCH")
                 {
-                    Locking locking = new(db);
-                    message = await locking.Lock("Doors", check, player, request, response);
+                    message = await action.Lock("Door", check, player, request, response);
                 }
 
                 break;

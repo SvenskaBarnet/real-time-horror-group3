@@ -86,7 +86,7 @@ public class Check(NpgsqlDataSource db)
         int doors = await GetEntries(roomId, "Door");
         int windows = await GetEntries(roomId, "Window");
 
-        string message = $"Your are in the {roomName}. \nThere is {doors} door(s) and {windows} window(s).";
+        string message = $"You are in the {roomName}. \nThere is {doors} door(s) and {windows} window(s).";
 
         return message;
     }
