@@ -99,5 +99,4 @@ async void Router(IAsyncResult result)
 
         listener.BeginGetContext(new AsyncCallback(Router), listener);
     }
-
 }
