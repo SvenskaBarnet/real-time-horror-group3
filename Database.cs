@@ -6,6 +6,8 @@ public class Database(NpgsqlDataSource db)
     public async Task Create()
     {
         await using var cmd = db.CreateCommand(@"
+ALTER DATABASE notsohomealone
+SET TIMEZONE TO +01;
 DROP TABLE IF EXISTS public.room, public.entry_point, public.danger, public.player, public.session;
 CREATE TABLE IF NOT EXISTS public.room
 (
@@ -22,7 +24,7 @@ CREATE TABLE IF NOT EXISTS public.entry_point
     type text NOT NULL,
     is_locked boolean NOT NULL DEFAULT false,
     room_id integer NOT NULL,
-    ""time"" timestamp without time zone,
+    ""time"" timestamp with time zone,
     PRIMARY KEY (id)
 );
 
