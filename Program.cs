@@ -91,6 +91,7 @@ async void Router(IAsyncResult result)
                 break;
         }
 
+        message = $"\n\n{message}\n\n";
         byte[] buffer = Encoding.UTF8.GetBytes(message);
         response.OutputStream.Write(buffer);
         response.OutputStream.Close();
@@ -98,5 +99,4 @@ async void Router(IAsyncResult result)
 
         listener.BeginGetContext(new AsyncCallback(Router), listener);
     }
-
 }
