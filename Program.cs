@@ -60,7 +60,7 @@ async void Router(IAsyncResult result)
                     message = await player.Create(request, response);
                 }
                 break;
-            case (string path) when path == "/start":
+            case (string path) when path == $"/{await player.Verify(request, response)}/start": // även lägga till att /ready måste va true.
                 if (request.HttpMethod is "GET")
                 {
                     Intro intro = new Intro();

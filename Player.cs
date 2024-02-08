@@ -24,6 +24,13 @@ public class Player(NpgsqlDataSource db)
 
         return message;
     }
+    public async Task<string> Ready(Player player, HttpListenerRequest request, HttpListenerResponse response)
+    {
+        await using var cmd = db.CreateCommand(@"
+            UPDATE public.player.is_ready
+            SET is_locked = true
+            WHERE name = $1;");
+    }
 
     public async Task<string> Move(HttpListenerRequest request, HttpListenerResponse response)
         
