@@ -19,7 +19,7 @@ public class Player(NpgsqlDataSource db)
         cmd.Parameters.AddWithValue(name);
         await cmd.ExecuteNonQueryAsync();
 
-        string message = $"Player '{name}' has been created.\n{await check.EntryPoints(request, response, name)}";
+        string message = $"Player '{name}' has been created. Type /ready when you are ready. Game can only start when all players are ready.";
         response.StatusCode = (int)HttpStatusCode.Created;
 
         return message;

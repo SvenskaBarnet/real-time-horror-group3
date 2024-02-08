@@ -59,6 +59,14 @@ async void Router(IAsyncResult result)
                     message = await player.Create(request, response);
                 }
                 break;
+            case (string path) when path == "/start":
+                if (request.HttpMethod is "GET")
+                {
+                    Intro intro = new Intro();
+                    message = await intro.Story(response);
+                   
+                }
+                break;
             case (string path) when path == $"/{await player.Verify(request, response)}/move":
                 if (request.HttpMethod is "PATCH")
                 {
