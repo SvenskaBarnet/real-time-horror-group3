@@ -27,12 +27,6 @@ public class Locking(NpgsqlDataSource db)
 
         await cmd.ExecuteNonQueryAsync();
 
-        string message = $"{lockName} is now locked";
-        byte[] buffer = Encoding.UTF8.GetBytes(message);
-        res.ContentType = "text/plain";
-        res.StatusCode = (int)HttpStatusCode.OK;
-
-        res.OutputStream.Write(buffer, 0, buffer.Length);
         res.OutputStream.Close();
     }
 }
