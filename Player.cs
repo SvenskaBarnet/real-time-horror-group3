@@ -78,6 +78,7 @@ public class Player(NpgsqlDataSource db)
         {
             username = reader.GetString(0);
         }
+
         return username;
     }
 
