@@ -43,10 +43,12 @@ public class Session(NpgsqlDataSource db)
     public async Task<string> EntryPointTimer (HttpListenerResponse response)
     {
         string message = string.Empty;
+
         await using var select = db.CreateCommand(@"
-                        SELECT COUNT(id)
-                        FROM public.session
-                        ");
+    UPDATE entry_point
+    SET time = CURRENT_TIMESTAMP
+    WHERE name = $1 AND room_id = $2 AND type = $3;
+");
 
         return message;
     }
