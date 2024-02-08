@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace real_time_horror_group3;
 
-public class Locking(NpgsqlDataSource db)
+public class PlayerAction(NpgsqlDataSource db)
 {
     public async Task<string> Lock(string type, Check check, Player player, HttpListenerRequest request, HttpListenerResponse response)
     {

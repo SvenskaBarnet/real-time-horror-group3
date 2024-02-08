@@ -19,7 +19,7 @@ public class Player(NpgsqlDataSource db)
         cmd.Parameters.AddWithValue(name);
         await cmd.ExecuteNonQueryAsync();
 
-        string message = $"Player '{name}' has been created.{await check.EntryPoints(request, response, name)}";
+        string message = $"Player '{name}' has been created.\n{await check.EntryPoints(request, response, name)}";
         response.StatusCode = (int)HttpStatusCode.Created;
 
         return message;
