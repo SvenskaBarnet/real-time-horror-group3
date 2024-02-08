@@ -26,6 +26,8 @@ public class Session(NpgsqlDataSource db)
 	                        time)
 	                        VALUES (
                             CURRENT_TIMESTAMP);
+                            UPDATE entry_point
+                            SET time = CURRENT_TIMESTAMP;
                             ");
             await insert.ExecuteNonQueryAsync();
 
@@ -40,15 +42,25 @@ public class Session(NpgsqlDataSource db)
         return message;
     }
    
-    public async Task<string> EntryPointTimer (HttpListenerResponse response)
+    public async Task<string> EntryPointTimer (string type, Check check, Player player, HttpListenerRequest request, HttpListenerResponse response)
     {
+        StreamReader reader = new(request.InputStream, request.ContentEncoding);
+        string time = reader.ReadToEnd();
+
         string message = string.Empty;
 
-        await using var select = db.CreateCommand(@"
-    UPDATE entry_point
-    SET time = CURRENT_TIMESTAMP
-    WHERE name = $1 AND room_id = $2 AND type = $3;
-");
+        await using var cmd = db.CreateCommand(@"
+        UPDATE entry_point
+        SET time = CURRENT_TIMESTAMP
+        WHERE name = $1 AND room_id = $2 AND type = $3;
+        ");
+
+        cmd.Parameters.AddWithValue(time);
+        cmd.Parameters.AddWithValue(await check.PlayerPosition(request, response, player));
+        cmd.Parameters.AddWithValue(type);
+
+        await cmd.ExecuteNonQueryAsync();
+        message = $"{time}";
 
         return message;
     }
