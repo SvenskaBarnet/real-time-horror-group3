@@ -5,6 +5,7 @@ namespace real_time_horror_group3;
 
 public class Player(NpgsqlDataSource db)
 {
+    Check check = new(db);
     public async Task<string> Create(HttpListenerRequest request, HttpListenerResponse response)
     {
         StreamReader reader = new(request.InputStream, request.ContentEncoding);
@@ -18,7 +19,7 @@ public class Player(NpgsqlDataSource db)
         cmd.Parameters.AddWithValue(name);
         await cmd.ExecuteNonQueryAsync();
 
-        string message = $"Player '{name}' has been created";
+        string message = $"Player '{name}' has been created.{await check.EntryPoints(request, response, name)}";
         response.StatusCode = (int)HttpStatusCode.Created;
 
         return message;
@@ -43,17 +44,19 @@ public class Player(NpgsqlDataSource db)
                 break;
         }
 
+        string playerName = await Verify(request, response);
+
         await using var cmd = db.CreateCommand(@"
                         UPDATE public.player
                         SET location = $1
                         WHERE name = $2;
                         ");
         cmd.Parameters.AddWithValue(room);
-        cmd.Parameters.AddWithValue(await Verify(request, response));
+        cmd.Parameters.AddWithValue(playerName);
 
         await cmd.ExecuteNonQueryAsync();
         response.StatusCode = (int)HttpStatusCode.OK;
-        string message = $"Moved to {roomName}";
+        string message = $"{await check.EntryPoints(request,response, playerName)}";
 
         return message;
     }

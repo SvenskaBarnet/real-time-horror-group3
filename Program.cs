@@ -64,17 +64,28 @@ async void Router(IAsyncResult result)
                     message = await player.Move(request, response);
                 }
                 break;
-            case (string path) when path == $"/{await player.Verify(request, response)}/check-windows":
+            case (string path) when path == $"/{await player.Verify(request, response)}/windows":
                 if (request.HttpMethod is "GET")
                 {
                     message = await check.Windows(request, response, player); 
                 }
+                else if (request.HttpMethod is "PATCH")
+                {
+                    Locking locking = new(db);
+                    message = await locking.Lock("Window", check, player, request, response);
+                }
                 break;
-            case (string path) when path == $"/{await player.Verify(request, response)}/check-doors":
+            case (string path) when path == $"/{await player.Verify(request, response)}/doors":
                 if (request.HttpMethod is "GET")
                 {
                     message = await check.Doors(request, response, player); 
                 }
+                else if (request.HttpMethod is "PATCH")
+                {
+                    Locking locking = new(db);
+                    message = await locking.Lock("Doors", check, player, request, response);
+                }
+
                 break;
 
             case "/new-session":
@@ -91,6 +102,7 @@ async void Router(IAsyncResult result)
                 break;
         }
 
+        message = $"\n\n{message}\n\n";
         byte[] buffer = Encoding.UTF8.GetBytes(message);
         response.OutputStream.Write(buffer);
         response.OutputStream.Close();
@@ -98,5 +110,4 @@ async void Router(IAsyncResult result)
 
         listener.BeginGetContext(new AsyncCallback(Router), listener);
     }
-
 }
