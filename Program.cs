@@ -12,6 +12,7 @@ Database database = new(db);
 await database.Create();
 
 bool listen = true;
+bool sessionStarted = false;
 string? message = string.Empty;
 
 Console.CancelKeyPress += delegate (object? sender, ConsoleCancelEventArgs e)
@@ -68,39 +69,66 @@ async void Router(IAsyncResult result)
                 }
                 break;
             case (string path) when path == $"/{await player.Verify(request, response)}/move":
-                if (request.HttpMethod is "PATCH")
+                if (sessionStarted)
                 {
-                    message = await player.Move(request, response);
+                    if (request.HttpMethod is "PATCH")
+                    {
+                        message = await player.Move(request, response);
+                    }
+                }
+                else
+                {
+                    message = "You need to start session to play";
+                    response.StatusCode = (int)HttpStatusCode.OK;
                 }
                 break;
             case (string path) when path == $"/{await player.Verify(request, response)}/windows":
-                if (request.HttpMethod is "GET")
+                if (sessionStarted)
                 {
-                    message = await check.Windows(request, response, player);
+                    if (request.HttpMethod is "GET")
+                    {
+                        message = await check.Windows(request, response, player);
+                    }
+                    else if (request.HttpMethod is "PATCH")
+                    {
+                        message = await action.Lock("Window", check, player, request, response);
+                    }
                 }
-                else if (request.HttpMethod is "PATCH")
+                else
                 {
-                    message = await action.Lock("Window", check, player, request, response);
+                    message = "You need to start session to play";
+                    response.StatusCode = (int)HttpStatusCode.OK;
                 }
                 break;
             case (string path) when path == $"/{await player.Verify(request, response)}/doors":
-                if (request.HttpMethod is "GET")
+                if (sessionStarted)
                 {
-                    message = await check.Doors(request, response, player);
+                    if (request.HttpMethod is "GET")
+                    {
+                        message = await check.Doors(request, response, player);
+                    }
+                    else if (request.HttpMethod is "PATCH")
+                    {
+                        message = await action.Lock("Door", check, player, request, response);
+                    }
                 }
-                else if (request.HttpMethod is "PATCH")
+                else
                 {
-                    message = await action.Lock("Door", check, player, request, response);
+                    message = "You need to start session to play";
+                    response.StatusCode = (int)HttpStatusCode.OK;
                 }
-
                 break;
 
-            case "/new-session":
+            case (string path) when path == $"/{await player.Verify(request, response)}/new-session":
                 Session session = new(db);
 
                 if (request.HttpMethod is "GET")
                 {
                     message = await session.Start(response);
+                    if (message.Contains("started"))
+                    {
+                        sessionStarted = true;
+                    }
                 }
                 break;
             default:
