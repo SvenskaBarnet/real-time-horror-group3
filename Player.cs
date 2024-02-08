@@ -9,7 +9,7 @@ public class Player(NpgsqlDataSource db)
     public async Task<string> Create(HttpListenerRequest request, HttpListenerResponse response)
     {
         StreamReader reader = new(request.InputStream, request.ContentEncoding);
-        string name = reader.ReadToEnd();
+        string name = reader.ReadToEnd().ToLower();
 
         await using var cmd = db.CreateCommand(@"
                     INSERT INTO public.player
