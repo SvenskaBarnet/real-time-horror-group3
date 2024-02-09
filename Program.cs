@@ -60,6 +60,12 @@ async void Router(IAsyncResult result)
                     message = await player.Create(request, response);
                 }
                 break;
+            case (string path) when path == $"/{await player.Verify(request, response)}/ready":
+                if (request.HttpMethod == "PATCH")
+                {
+                    message = await player.Ready(request, response);
+                }
+                break;
             case (string path) when path == $"/{await player.Verify(request, response)}/start": // även lägga till att /ready måste va true.
                 if (request.HttpMethod is "GET")
                 {

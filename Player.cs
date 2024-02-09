@@ -24,13 +24,25 @@ public class Player(NpgsqlDataSource db)
 
         return message;
     }
-    public async Task<string> Ready(Player player, HttpListenerRequest request, HttpListenerResponse response)
+
+    public async Task<string> Ready(HttpListenerRequest request, HttpListenerResponse response)
     {
+        string playerName = await Verify(request, response);
+
         await using var cmd = db.CreateCommand(@"
-            UPDATE public.player.is_ready
-            SET is_locked = true
-            WHERE name = $1;");
+        UPDATE public.player
+        SET is_ready = true
+        WHERE name = $1;
+    ");
+        cmd.Parameters.AddWithValue(playerName);
+
+        await cmd.ExecuteNonQueryAsync();
+        response.StatusCode = (int)HttpStatusCode.OK;
+
+        string message = $"{playerName}, you are ready!";
+        return message;
     }
+
 
     public async Task<string> Move(HttpListenerRequest request, HttpListenerResponse response)
         
