@@ -54,10 +54,8 @@ async void Router(IAsyncResult result)
         Session session = new(db);
         GameMessage gameMessage = new();
 
-
         if (await session.EntryPointTimer() == false)
         {
-
             switch (request.Url?.AbsolutePath.ToLower())
             {
                 case (string path) when path == "/new-player":
