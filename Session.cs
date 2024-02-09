@@ -1,4 +1,5 @@
 ﻿using Npgsql;
+using System.Globalization;
 using System.Net;
 
 namespace real_time_horror_group3;
@@ -46,8 +47,9 @@ public class Session(NpgsqlDataSource db)
     {
         bool gameOver = false;
         await using var cmd = db.CreateCommand(@"
-        SELECT time FROM public.entry_point
-WHERE time is not null;
+        SELECT to_char(""time"", 'HH24:MI:SS')
+        FROM public.entry_point;
+        WHERE time is not null;
         ");
 
         var reader = await cmd.ExecuteReaderAsync();
@@ -56,18 +58,22 @@ WHERE time is not null;
 
         while (await reader.ReadAsync())
         {
-            
 
-                sessionStart = reader.GetDateTime(0);
-                TimeSpan timeElapsed = currentTime - sessionStart;
-                if ((timeElapsed.TotalSeconds <= 60))
-                {
-                    gameOver = false;
-                }
-                else
-                {
-                    gameOver = true;
-                
+
+
+            sessionStart = reader.GetDateTime(0);
+
+
+            TimeSpan timeElapsed = currentTime - sessionStart;
+            if ((timeElapsed.TotalSeconds > 60))
+            {
+                gameOver = true;
+                break;
+            }
+            else
+            {
+                gameOver = false;
+
             }
 
         }
