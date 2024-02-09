@@ -39,9 +39,9 @@ CREATE TABLE IF NOT EXISTS public.player
 
 CREATE TABLE IF NOT EXISTS public.session
 (
-  id serial PRIMARY KEY,
-  ""time"" timestamp without time zone NOT NULL,
-  formatted_time time DEFAULT CAST(CURRENT_TIME AS time)
+    id serial,
+    ""time"" timestamp with time zone NOT NULL,
+    PRIMARY KEY (id)
 );
 
 ALTER TABLE IF EXISTS public.entry_point

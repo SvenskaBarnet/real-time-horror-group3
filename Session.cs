@@ -1,6 +1,7 @@
 ﻿using Npgsql;
 using System.Globalization;
 using System.Net;
+using System.Runtime.Serialization;
 
 namespace real_time_horror_group3;
 
@@ -48,24 +49,27 @@ public class Session(NpgsqlDataSource db)
         bool gameOver = false;
         await using var cmd = db.CreateCommand(@"
         SELECT to_char(""time"", 'HH24:MI:SS')
-        FROM public.entry_point;
+        FROM public.entry_point
         WHERE time is not null;
         ");
 
         var reader = await cmd.ExecuteReaderAsync();
-        DateTime currentTime = DateTime.Now;
-        DateTime sessionStart = new();
+        TimeOnly currentTime = TimeOnly.FromDateTime(DateTime.Now);
+        String sessionStart = string.Empty;
 
         while (await reader.ReadAsync())
         {
+            sessionStart = reader.GetString(0);
+
+            var split = sessionStart.Split(":");
+
+            TimeOnly startTime = new(int.Parse(split[0]), int.Parse(split[1]), int.Parse(split[2]));
+            
+           
 
 
-
-            sessionStart = reader.GetDateTime(0);
-
-
-            TimeSpan timeElapsed = currentTime - sessionStart;
-            if ((timeElapsed.TotalSeconds > 60))
+            TimeSpan timeElapsed = currentTime - startTime;
+            if ((timeElapsed.TotalSeconds > 360)) // 4 minuter tills det blir "game over"
             {
                 gameOver = true;
                 break;
@@ -77,7 +81,7 @@ public class Session(NpgsqlDataSource db)
             }
 
         }
-        await Console.Out.WriteLineAsync(currentTime.ToLongTimeString());
+
         return gameOver;
     }
 }
