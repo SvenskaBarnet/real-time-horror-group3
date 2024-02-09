@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS public.player
 CREATE TABLE IF NOT EXISTS public.session
 (
     id serial,
-    ""time"" timestamp without time zone NOT NULL,
+    ""time"" timestamp with time zone NOT NULL,
     PRIMARY KEY (id)
 );
 

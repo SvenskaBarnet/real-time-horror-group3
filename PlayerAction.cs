@@ -27,6 +27,7 @@ public class PlayerAction(NpgsqlDataSource db)
 
         await cmd.ExecuteNonQueryAsync();
         string message = $"{type} {lockName} is now locked";
+
         return message;
     }
 }
