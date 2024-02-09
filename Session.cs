@@ -64,8 +64,8 @@ public class Session(NpgsqlDataSource db)
             var split = sessionStart.Split(":");
 
             TimeOnly startTime = new(int.Parse(split[0]), int.Parse(split[1]), int.Parse(split[2]));
-            
-           
+
+
 
 
             TimeSpan timeElapsed = currentTime - startTime;
@@ -83,5 +83,26 @@ public class Session(NpgsqlDataSource db)
         }
 
         return gameOver;
+    }
+    public async Task<TimeSpan> ElapsedTime()
+    {
+        await using var sessionStart = db.CreateCommand(@"
+            SELECT to_char(""time"", 'HH24:MI:SS')
+            FROM public.session 
+            WHERE time is not null;
+            ");
+        var reader = await sessionStart.ExecuteReaderAsync();
+
+        TimeOnly currentTime = TimeOnly.FromDateTime(DateTime.Now);
+        TimeOnly startTime = currentTime;
+        while (await reader.ReadAsync())
+        {
+            string[] time = reader.GetString(0).Split(":");
+            startTime = new(int.Parse(time[0]), int.Parse(time[1]), int.Parse(time[2]));
+        }
+
+        TimeSpan interval = currentTime - startTime;
+        await Console.Out.WriteLineAsync($"{interval.TotalSeconds}");
+        return interval;
     }
 }
