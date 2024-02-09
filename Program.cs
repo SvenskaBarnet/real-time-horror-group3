@@ -52,6 +52,8 @@ async void Router(IAsyncResult result)
         Check check = new(db);
         PlayerAction action = new(db);
         Session session = new(db);
+        GameMessage gameMessage = new();
+
 
         if (await session.EntryPointTimer() == false)
         {
@@ -117,7 +119,6 @@ async void Router(IAsyncResult result)
 
                 case (string path) when path == $"/{await player.Verify(request, response)}/new-session":
 
-
                     if (request.HttpMethod is "GET")
                     {
                         message = await session.Start(response);
@@ -127,9 +128,13 @@ async void Router(IAsyncResult result)
                         }
                     }
                     break;
+
+                case (string path) when path == "/help":
+                    message = gameMessage.Help(response);
+                    break;
+
                 default:
-                    message = "Not Found";
-                    response.StatusCode = (int)HttpStatusCode.NotFound;
+                    message = gameMessage.NotFound(response);
                     break;
             }
         }
