@@ -67,12 +67,20 @@ async void Router(IAsyncResult result)
                     message = await player.Ready(request, response);
                 }
                 break;
-            case (string path) when path == $"/{await player.Verify(request, response)}/start": // även lägga till att /ready måste va true.
+            case (string path) when path == $"/{await player.Verify(request, response)}/start":
                 if (request.HttpMethod is "GET")
                 {
-                    Intro intro = new Intro();
-                    message = await intro.Story(response);
-                   
+                    bool playersReady = await player.CheckAllPlayersReady(response);
+                    if (playersReady)
+                    {
+                        Intro intro = new Intro();
+                        message = await intro.Story(response);
+                    }
+                    else
+                    {
+                        message = "Not all players are ready. Please wait until all players are ready to start.";
+                        response.StatusCode = (int)HttpStatusCode.OK;
+                    }
                 }
                 break;
             case (string path) when path == $"/{await player.Verify(request, response)}/move":

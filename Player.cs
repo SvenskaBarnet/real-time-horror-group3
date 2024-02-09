@@ -45,7 +45,7 @@ public class Player(NpgsqlDataSource db)
 
 
     public async Task<string> Move(HttpListenerRequest request, HttpListenerResponse response)
-        
+
     {
         StreamReader reader = new(request.InputStream, request.ContentEncoding);
         string roomName = reader.ReadToEnd();
@@ -75,7 +75,7 @@ public class Player(NpgsqlDataSource db)
 
         await cmd.ExecuteNonQueryAsync();
         response.StatusCode = (int)HttpStatusCode.OK;
-        string message = $"{await check.EntryPoints(request,response, playerName)}";
+        string message = $"{await check.EntryPoints(request, response, playerName)}";
 
         return message;
     }
@@ -93,7 +93,7 @@ public class Player(NpgsqlDataSource db)
         var reader = await cmd.ExecuteReaderAsync();
 
         string username = string.Empty;
-        if(await reader.ReadAsync())
+        if (await reader.ReadAsync())
         {
             username = reader.GetString(0);
         }
@@ -101,4 +101,43 @@ public class Player(NpgsqlDataSource db)
         return username;
     }
 
+    public async Task<bool> CheckAllPlayersReady(HttpListenerResponse response)
+    {
+        await using var cmd = db.CreateCommand(@"
+        SELECT COUNT(*)
+        FROM public.player
+        ");
+
+        var reader1 = await cmd.ExecuteReaderAsync();
+
+        int totalPlayers = 0;
+        if (await reader1.ReadAsync())
+        {
+            totalPlayers = reader1.GetInt32(0);
+        }
+
+        await using var cmd1 = db.CreateCommand(@"
+        SELECT COUNT(*) 
+        FROM public.player 
+        WHERE is_ready = true
+        ");
+
+        var reader2 = await cmd1.ExecuteReaderAsync();
+
+        int readyPlayers = 0;
+        if (await reader2.ReadAsync())
+        {
+            readyPlayers = reader2.GetInt32(0);
+        }
+        response.StatusCode = (int)HttpStatusCode.OK;
+        if (totalPlayers == readyPlayers)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+
+    }
 }
