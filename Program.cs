@@ -51,6 +51,7 @@ async void Router(IAsyncResult result)
         Player player = new(db);
         Check check = new(db);
         PlayerAction action = new(db);
+        GameMessage gameMessage = new();
 
         switch (request.Url?.AbsolutePath.ToLower())
         {
@@ -137,9 +138,13 @@ async void Router(IAsyncResult result)
                     }
                 }
                 break;
+
+            case (string path) when path == "/help":
+                message = gameMessage.Help(response);
+                break;
+
             default:
-                message = "Not Found";
-                response.StatusCode = (int)HttpStatusCode.NotFound;
+                message = gameMessage.NotFound(response);
                 break;
         }
 
