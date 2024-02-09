@@ -57,7 +57,6 @@ async void Router(IAsyncResult result)
 
         if (await session.EntryPointTimer() == false)
         {
-
             switch (request.Url?.AbsolutePath.ToLower())
             {
                 case (string path) when path == "/new-player":
@@ -66,10 +65,33 @@ async void Router(IAsyncResult result)
                         message = await player.Create(request, response);
                     }
                     break;
+                case (string path) when path == $"/{await player.Verify(request, response)}/ready":
+                    if (request.HttpMethod == "PATCH")
+                    {
+                        message = await player.Ready(request, response);
+                    }
+                    break;
+                case (string path) when path == $"/{await player.Verify(request, response)}/start":
+                    if (request.HttpMethod is "GET")
+                    {
+                        bool playersReady = await player.CheckAllPlayersReady(response);
+                        if (playersReady)
+                        {
+                            Intro intro = new Intro();
+                            message = await intro.Story(response);
+                        }
+                        else
+                        {
+                            message = "Not all players are ready. Please wait until all players are ready to start.";
+                            response.StatusCode = (int)HttpStatusCode.OK;
+                        }
+                    }
+                    break;
                 case (string path) when path == $"/{await player.Verify(request, response)}/move":
                     if (sessionStarted)
                     {
                         if (request.HttpMethod is "PATCH")
+
                         {
                             message = await player.Move(request, response);
                         }
@@ -138,6 +160,7 @@ async void Router(IAsyncResult result)
                     break;
             }
         }
+
         else
         {
             message = "Game over!";

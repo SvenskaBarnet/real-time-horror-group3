@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS public.player
     name text NOT NULL,
     location integer NOT NULL,
     is_dead boolean NOT NULL DEFAULT false,
+    is_ready boolean NOT NULL DEFAULT false,
     PRIMARY KEY (id)
 );
 

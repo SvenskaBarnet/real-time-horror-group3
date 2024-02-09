@@ -19,14 +19,33 @@ public class Player(NpgsqlDataSource db)
         cmd.Parameters.AddWithValue(name);
         await cmd.ExecuteNonQueryAsync();
 
-        string message = $"Player '{name}' has been created.\n{await check.EntryPoints(request, response, name)}";
+        string message = $"Player '{name}' has been created. Type /ready when you are ready. Game can only start when all players are ready.";
         response.StatusCode = (int)HttpStatusCode.Created;
 
         return message;
     }
 
+    public async Task<string> Ready(HttpListenerRequest request, HttpListenerResponse response)
+    {
+        string playerName = await Verify(request, response);
+
+        await using var cmd = db.CreateCommand(@"
+        UPDATE public.player
+        SET is_ready = true
+        WHERE name = $1;
+    ");
+        cmd.Parameters.AddWithValue(playerName);
+
+        await cmd.ExecuteNonQueryAsync();
+        response.StatusCode = (int)HttpStatusCode.OK;
+
+        string message = $"{playerName}, you are ready!";
+        return message;
+    }
+
+
     public async Task<string> Move(HttpListenerRequest request, HttpListenerResponse response)
-        
+
     {
         StreamReader reader = new(request.InputStream, request.ContentEncoding);
         string roomName = reader.ReadToEnd();
@@ -56,7 +75,7 @@ public class Player(NpgsqlDataSource db)
 
         await cmd.ExecuteNonQueryAsync();
         response.StatusCode = (int)HttpStatusCode.OK;
-        string message = $"{await check.EntryPoints(request,response, playerName)}";
+        string message = $"{await check.EntryPoints(request, response, playerName)}";
 
         return message;
     }
@@ -74,7 +93,7 @@ public class Player(NpgsqlDataSource db)
         var reader = await cmd.ExecuteReaderAsync();
 
         string username = string.Empty;
-        if(await reader.ReadAsync())
+        if (await reader.ReadAsync())
         {
             username = reader.GetString(0);
         }
@@ -82,4 +101,43 @@ public class Player(NpgsqlDataSource db)
         return username;
     }
 
+    public async Task<bool> CheckAllPlayersReady(HttpListenerResponse response)
+    {
+        await using var cmd = db.CreateCommand(@"
+        SELECT COUNT(*)
+        FROM public.player
+        ");
+
+        var reader1 = await cmd.ExecuteReaderAsync();
+
+        int totalPlayers = 0;
+        if (await reader1.ReadAsync())
+        {
+            totalPlayers = reader1.GetInt32(0);
+        }
+
+        await using var cmd1 = db.CreateCommand(@"
+        SELECT COUNT(*) 
+        FROM public.player 
+        WHERE is_ready = true
+        ");
+
+        var reader2 = await cmd1.ExecuteReaderAsync();
+
+        int readyPlayers = 0;
+        if (await reader2.ReadAsync())
+        {
+            readyPlayers = reader2.GetInt32(0);
+        }
+        response.StatusCode = (int)HttpStatusCode.OK;
+        if (totalPlayers == readyPlayers)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+
+    }
 }
