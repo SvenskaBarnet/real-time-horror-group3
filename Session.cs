@@ -41,27 +41,37 @@ public class Session(NpgsqlDataSource db)
         }
         return message;
     }
-   
-    public async Task<string> EntryPointTimer (string type, Check check, Player player, HttpListenerRequest request, HttpListenerResponse response)
+
+    public async Task<bool> EntryPointTimer()
     {
-        StreamReader reader = new(request.InputStream, request.ContentEncoding);
-        string time = reader.ReadToEnd();
-
-        string message = string.Empty;
-
+        bool gameOver = false;
         await using var cmd = db.CreateCommand(@"
-        UPDATE entry_point
-        SET time = CURRENT_TIMESTAMP
-        WHERE name = $1 AND room_id = $2 AND type = $3;
+        SELECT time FROM public.entry_point
+WHERE time is not null;
         ");
 
-        cmd.Parameters.AddWithValue(time);
-        cmd.Parameters.AddWithValue(await check.PlayerPosition(request, response, player));
-        cmd.Parameters.AddWithValue(type);
+        var reader = await cmd.ExecuteReaderAsync();
+        DateTime currentTime = DateTime.Now;
+        DateTime sessionStart = new();
 
-        await cmd.ExecuteNonQueryAsync();
-        message = $"{time}";
+        while (await reader.ReadAsync())
+        {
+            
 
-        return message;
+                sessionStart = reader.GetDateTime(0);
+                TimeSpan timeElapsed = currentTime - sessionStart;
+                if ((timeElapsed.TotalSeconds <= 60))
+                {
+                    gameOver = false;
+                }
+                else
+                {
+                    gameOver = true;
+                
+            }
+
+        }
+        await Console.Out.WriteLineAsync(currentTime.ToLongTimeString());
+        return gameOver;
     }
 }
