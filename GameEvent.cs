@@ -1,4 +1,5 @@
 ﻿using Npgsql;
+using System.Diagnostics.Contracts;
 using System.Net;
 using System.Text;
 
@@ -28,5 +29,24 @@ public class GameEvent(NpgsqlDataSource db)
             ");
         lockEntry.Parameters.AddWithValue(randomEntry);
         await lockEntry.ExecuteNonQueryAsync();
+    }
+
+    public async void RandomTrigger(Session session,GameEvent gameEvent)
+    {
+        TimeSpan timeElapsed = await session.ElapsedTime();
+
+        double baseProbability = 0.1;
+        double exponentialRate = 0.05;
+        double timeInterval = timeElapsed.TotalMinutes;
+
+        double probability = baseProbability * Math.Exp(exponentialRate * timeInterval);
+
+        Random random = new Random();
+        double randomValue = random.NextDouble();
+
+        if (randomValue <= probability)
+        {
+            await gameEvent.UnlockEntry();
+        }
     }
 }

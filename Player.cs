@@ -5,7 +5,9 @@ namespace real_time_horror_group3;
 
 public class Player(NpgsqlDataSource db)
 {
-    Check check = new(db);
+    private GameEvent gameEvent = new(db);    
+    private Session session = new(db);
+    private Check check = new(db);
     public async Task<string> Create(HttpListenerRequest request, HttpListenerResponse response)
     {
         StreamReader reader = new(request.InputStream, request.ContentEncoding);
@@ -74,6 +76,9 @@ public class Player(NpgsqlDataSource db)
         cmd.Parameters.AddWithValue(playerName);
 
         await cmd.ExecuteNonQueryAsync();
+
+        gameEvent.RandomTrigger(session, gameEvent);
+
         response.StatusCode = (int)HttpStatusCode.OK;
         string message = $"{await check.EntryPoints(request, response, playerName)}";
 

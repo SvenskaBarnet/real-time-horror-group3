@@ -10,6 +10,8 @@ namespace real_time_horror_group3;
 
 public class PlayerAction(NpgsqlDataSource db)
 {
+    private GameEvent gameEvent = new(db);
+    private Session session = new(db);
     public async Task<string> Lock(string type, Check check, Player player, HttpListenerRequest request, HttpListenerResponse response)
     {
         StreamReader reader = new(request.InputStream, request.ContentEncoding);
@@ -27,6 +29,8 @@ public class PlayerAction(NpgsqlDataSource db)
 
         await cmd.ExecuteNonQueryAsync();
         string message = $"{type} {lockName} is now locked";
+
+        gameEvent.RandomTrigger(session, gameEvent);
 
         return message;
     }

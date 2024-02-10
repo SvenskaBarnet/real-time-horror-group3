@@ -102,7 +102,6 @@ public class Session(NpgsqlDataSource db)
         }
 
         TimeSpan interval = currentTime - startTime;
-        await Console.Out.WriteLineAsync($"{interval.TotalSeconds}");
         return interval;
     }
 }
