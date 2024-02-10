@@ -6,6 +6,8 @@ namespace real_time_horror_group3;
 
 public class Check(NpgsqlDataSource db)
 {
+    private GameEvent gameEvent = new GameEvent(db);
+    private Session session = new Session(db);
     public async Task<string> Windows(HttpListenerRequest request, HttpListenerResponse response, Player player)
     {
         int roomId = await PlayerPosition(request, response, player);
@@ -31,6 +33,8 @@ public class Check(NpgsqlDataSource db)
                     break;
             }
         }
+
+        gameEvent.RandomTrigger(session, gameEvent);
         response.StatusCode = (int)HttpStatusCode.OK;
         return message;
     }
@@ -59,6 +63,7 @@ public class Check(NpgsqlDataSource db)
                     break;
             }
         }
+        gameEvent.RandomTrigger(session, gameEvent);
         response.StatusCode = (int)HttpStatusCode.OK;
         return message;
     }
