@@ -6,23 +6,40 @@ namespace real_time_horror_group3;
 
 public class Highscore(NpgsqlDataSource db)
 {
-    public async Task HandleGameOver()
+    public async Task<bool> HandleGameOver(HttpListenerRequest request, HttpListenerResponse response)
     {
         Player player = new(db);
-        string playerName = await player.Verify();
+        string playerName = await player.Verify(request, response);
         await using var cmd = db.CreateCommand(@"
-        UPDATE public.player
-        SET is_dead = true
-        WHERE name = $1;
-    ");
+        SELECT COUNT(*) 
+        FROM public.player
+        WHERE name = $1 AND is_dead = true;
+        ");
         cmd.Parameters.AddWithValue(playerName);
-        await cmd.ExecuteNonQueryAsync();
 
+        var reader = await cmd.ExecuteReaderAsync();
+        int deadPlayer = 0;
+        while (await reader.ReadAsync())
+        {
+            deadPlayer = reader.GetInt32(0);
+        }
+
+        response.StatusCode = (int)HttpStatusCode.OK;
+        if (deadPlayer == 0)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
-    public async Task AddGameOverTime(string playerName)
+    public async Task AddGameOverTime(HttpListenerRequest request, HttpListenerResponse response)
     {
         Session session = new(db);
+        Player player = new(db);
+        string playerName = await player.Verify(request, response);
         var time = session.FormattedTime();
         var highscore = db.CreateCommand(@"
         INSERT INTO public.highscore(player_name, session_time)

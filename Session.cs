@@ -38,7 +38,7 @@ public class Session(NpgsqlDataSource db)
     }
 
 
-    public async Task<bool> EntryPointTimer(HttpListenerRequest request, HttpListenerResponse response)
+    public async Task<bool> EntryPointTimer()
     {
         bool gameOver = false;
         await using var cmd = db.CreateCommand(@"
@@ -71,7 +71,6 @@ public class Session(NpgsqlDataSource db)
             else
             {
                 gameOver = false;
-
             }
 
         }

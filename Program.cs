@@ -53,8 +53,9 @@ async void Router(IAsyncResult result)
         PlayerAction action = new(db);
         Session session = new(db);
         GameMessage gameMessage = new();
+        Highscore highScore = new(db);
 
-        if (await session.EntryPointTimer() == false)
+        if (await session.EntryPointTimer() == false && await highScore.HandleGameOver(request, response) == true)
         {
             switch (request.Url?.AbsolutePath.ToLower())
             {
