@@ -64,12 +64,14 @@ async void Router(IAsyncResult result)
                         message = await player.Create(request, response);
                     }
                     break;
+                    
                 case (string path) when path == $"/{await player.Verify(request, response)}/ready":
                     if (request.HttpMethod == "PATCH")
                     {
                         message = await player.Ready(request, response);
                     }
                     break;
+
                 case (string path) when path == $"/{await player.Verify(request, response)}/start":
                     if (request.HttpMethod is "GET")
                     {
@@ -78,6 +80,8 @@ async void Router(IAsyncResult result)
                         {
                             Intro intro = new Intro();
                             message = await intro.Story(response);
+                            await session.Start();
+                            sessionStarted = true;
                         }
                         else
                         {
@@ -86,6 +90,7 @@ async void Router(IAsyncResult result)
                         }
                     }
                     break;
+
                 case (string path) when path == $"/{await player.Verify(request, response)}/move":
                     if (sessionStarted)
                     {
@@ -96,10 +101,11 @@ async void Router(IAsyncResult result)
                     }
                     else
                     {
-                        message = "You need to start session to play";
+                        message = "You need to start game to play";
                         response.StatusCode = (int)HttpStatusCode.OK;
                     }
                     break;
+                    
                 case (string path) when path == $"/{await player.Verify(request, response)}/windows":
                     if (sessionStarted)
                     {
@@ -114,10 +120,11 @@ async void Router(IAsyncResult result)
                     }
                     else
                     {
-                        message = "You need to start session to play";
+                        message = "You need to start game to play";
                         response.StatusCode = (int)HttpStatusCode.OK;
                     }
                     break;
+                    
                 case (string path) when path == $"/{await player.Verify(request, response)}/doors":
                     if (sessionStarted)
                     {
@@ -132,27 +139,23 @@ async void Router(IAsyncResult result)
                     }
                     else
                     {
-                        message = "You need to start session to play";
+                        message = "You need to start game to play";
                         response.StatusCode = (int)HttpStatusCode.OK;
                     }
                     break;
 
-                case (string path) when path == $"/{await player.Verify(request, response)}/new-session":
-
-                    if (request.HttpMethod is "GET")
+                case (string path) when path == $"/{await player.Verify(request, response)}/time":
+                    if (sessionStarted)
                     {
-                        message = await session.Start(response);
-                        if (message.Contains("started"))
+                        if (request.HttpMethod is "GET")
                         {
-                            sessionStarted = true;
+                            message = await session.FormattedTime();
                         }
                     }
-                    break;
-
-                case (string path) when path == $"/{await player.Verify(request, response)}/time":
-                    if (request.HttpMethod is "GET")
+                    else
                     {
-                        message = await session.FormattedTime();
+                        message = "You need to start game to play";
+                        response.StatusCode = (int)HttpStatusCode.OK;
                     }
                     break;
 
