@@ -8,7 +8,7 @@ namespace real_time_horror_group3;
 
 public class Session(NpgsqlDataSource db)
 {
-    public async Task<string> Start(HttpListenerResponse response)
+    public async Task Start()
     {
         string message = string.Empty;
         await using var select = db.CreateCommand(@"
@@ -33,16 +33,7 @@ public class Session(NpgsqlDataSource db)
                             SET time = CURRENT_TIMESTAMP;
                             ");
             await insert.ExecuteNonQueryAsync();
-
-            message = $"Session started at: {DateTime.Now.ToLongTimeString()}";
-            response.StatusCode = (int)HttpStatusCode.OK;
         }
-        else
-        {
-            message = "Session already in progress";
-            response.StatusCode = (int)HttpStatusCode.OK;
-        }
-        return message;
     }
 
     public async Task<bool> EntryPointTimer()

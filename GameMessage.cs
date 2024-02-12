@@ -14,8 +14,8 @@ List of possible commands and paths:
 Create player: 
 curl -d <player name> localhost:3000/new-player
 
-Start session: 
-curl localhost:3000/<player name>/new-session
+Start game: 
+curl localhost:3000/<player name>/start
 
 Move: 
 curl -X PATCH -d <room name> localhost:3000/<player name>/move
