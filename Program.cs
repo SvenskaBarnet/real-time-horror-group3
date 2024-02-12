@@ -64,12 +64,14 @@ async void Router(IAsyncResult result)
                         message = await player.Create(request, response);
                     }
                     break;
+                    
                 case (string path) when path == $"/{await player.Verify(request, response)}/ready":
                     if (request.HttpMethod == "PATCH")
                     {
                         message = await player.Ready(request, response);
                     }
                     break;
+
                 case (string path) when path == $"/{await player.Verify(request, response)}/start":
                     if (request.HttpMethod is "GET")
                     {
@@ -88,6 +90,7 @@ async void Router(IAsyncResult result)
                         }
                     }
                     break;
+
                 case (string path) when path == $"/{await player.Verify(request, response)}/move":
                     if (sessionStarted)
                     {
@@ -102,6 +105,7 @@ async void Router(IAsyncResult result)
                         response.StatusCode = (int)HttpStatusCode.OK;
                     }
                     break;
+                    
                 case (string path) when path == $"/{await player.Verify(request, response)}/windows":
                     if (sessionStarted)
                     {
@@ -120,6 +124,7 @@ async void Router(IAsyncResult result)
                         response.StatusCode = (int)HttpStatusCode.OK;
                     }
                     break;
+                    
                 case (string path) when path == $"/{await player.Verify(request, response)}/doors":
                     if (sessionStarted)
                     {
