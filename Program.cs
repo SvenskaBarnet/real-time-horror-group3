@@ -78,7 +78,8 @@ async void Router(IAsyncResult result)
                         {
                             Intro intro = new Intro();
                             message = await intro.Story(response);
-                            sessionStarted = await session.Start();
+                            await session.Start();
+                            sessionStarted = true;
                         }
                         else
                         {

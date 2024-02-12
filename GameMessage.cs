@@ -15,7 +15,7 @@ Create player:
 curl -d <player name> localhost:3000/new-player
 
 Start game: 
-curl localhost:3000/<player name>/new-session
+curl localhost:3000/<player name>/start
 
 Move: 
 curl -X PATCH -d <room name> localhost:3000/<player name>/move
