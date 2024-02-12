@@ -78,6 +78,7 @@ async void Router(IAsyncResult result)
                         {
                             Intro intro = new Intro();
                             message = await intro.Story(response);
+                            sessionStarted = await session.Start();
                         }
                         else
                         {
@@ -96,7 +97,7 @@ async void Router(IAsyncResult result)
                     }
                     else
                     {
-                        message = "You need to start session to play";
+                        message = "You need to start game to play";
                         response.StatusCode = (int)HttpStatusCode.OK;
                     }
                     break;
@@ -114,7 +115,7 @@ async void Router(IAsyncResult result)
                     }
                     else
                     {
-                        message = "You need to start session to play";
+                        message = "You need to start game to play";
                         response.StatusCode = (int)HttpStatusCode.OK;
                     }
                     break;
@@ -132,27 +133,23 @@ async void Router(IAsyncResult result)
                     }
                     else
                     {
-                        message = "You need to start session to play";
+                        message = "You need to start game to play";
                         response.StatusCode = (int)HttpStatusCode.OK;
                     }
                     break;
 
-                case (string path) when path == $"/{await player.Verify(request, response)}/new-session":
-
-                    if (request.HttpMethod is "GET")
+                case (string path) when path == $"/{await player.Verify(request, response)}/time":
+                    if (sessionStarted)
                     {
-                        message = await session.Start(response);
-                        if (message.Contains("started"))
+                        if (request.HttpMethod is "GET")
                         {
-                            sessionStarted = true;
+                            message = await session.FormattedTime();
                         }
                     }
-                    break;
-
-                case (string path) when path == $"/{await player.Verify(request, response)}/time":
-                    if (request.HttpMethod is "GET")
+                    else
                     {
-                        message = await session.FormattedTime();
+                        message = "You need to start game to play";
+                        response.StatusCode = (int)HttpStatusCode.OK;
                     }
                     break;
 
