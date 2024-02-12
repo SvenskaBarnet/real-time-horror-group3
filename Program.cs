@@ -90,7 +90,6 @@ async void Router(IAsyncResult result)
                     if (sessionStarted)
                     {
                         if (request.HttpMethod is "PATCH")
-
                         {
                             message = await player.Move(request, response);
                         }
@@ -147,6 +146,13 @@ async void Router(IAsyncResult result)
                         {
                             sessionStarted = true;
                         }
+                    }
+                    break;
+
+                case (string path) when path == $"/{await player.Verify(request, response)}/time":
+                    if (request.HttpMethod is "GET")
+                    {
+                        message = await session.FormattedTime();
                     }
                     break;
 
