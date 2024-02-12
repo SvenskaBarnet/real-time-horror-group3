@@ -1,5 +1,6 @@
 ﻿using Npgsql;
 using System.Globalization;
+using System.Linq.Expressions;
 using System.Net;
 using System.Runtime.Serialization;
 
@@ -103,5 +104,12 @@ public class Session(NpgsqlDataSource db)
 
         TimeSpan interval = currentTime - startTime;
         return interval;
+    }
+    public async Task<string> FormattedTime()
+    {
+
+        TimeSpan elapsedTime = await ElapsedTime();
+
+        return elapsedTime.ToString(@"hh\:mm\:ss");
     }
 }
