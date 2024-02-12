@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.Linq.Expressions;
 using System.Net;
+using System.Numerics;
 using System.Runtime.Serialization;
 
 namespace real_time_horror_group3;
@@ -45,7 +46,8 @@ public class Session(NpgsqlDataSource db)
         return message;
     }
 
-    public async Task<bool> EntryPointTimer()
+
+    public async Task<bool> EntryPointTimer(HttpListenerRequest request, HttpListenerResponse response)
     {
         bool gameOver = false;
         await using var cmd = db.CreateCommand(@"

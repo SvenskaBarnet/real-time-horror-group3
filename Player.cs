@@ -103,7 +103,8 @@ public class Player(NpgsqlDataSource db)
             username = reader.GetString(0);
         }
 
-        return username;
+        return username; 
+       
     }
 
     public async Task<bool> CheckAllPlayersReady(HttpListenerResponse response)
