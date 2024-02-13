@@ -4,9 +4,9 @@ using System.Net;
 using System.Text;
 
 namespace real_time_horror_group3; 
-public class GameEvent(NpgsqlDataSource db)
+public class GameEvent()
 {
-    public void UnlockEntry()
+    public static void UnlockEntry(NpgsqlDataSource db)
     {
          using var entryCount = db.CreateCommand(@"
             SELECT COUNT(id)
@@ -31,9 +31,9 @@ public class GameEvent(NpgsqlDataSource db)
          lockEntry.ExecuteNonQuery();
     }
 
-    public void RandomTrigger(Session session,GameEvent gameEvent)
+    public static void RandomTrigger(NpgsqlDataSource db)
     {
-        TimeSpan timeElapsed =  session.ElapsedTime();
+        TimeSpan timeElapsed =  Session.ElapsedTime(db);
 
         double baseProbability = 0.1;
         double exponentialRate = 0.05;
@@ -46,7 +46,7 @@ public class GameEvent(NpgsqlDataSource db)
 
         if (randomValue <= probability)
         {
-             gameEvent.UnlockEntry();
+             GameEvent.UnlockEntry(db);
         }
     }
 }

@@ -6,12 +6,12 @@ using System.Runtime.Serialization;
 
 namespace real_time_horror_group3;
 
-public class Session(NpgsqlDataSource db)
+public class Session()
 {
-    public void Start()
+    public static void Start(NpgsqlDataSource db)
     {
         string message = string.Empty;
-        using var select = db.CreateCommand(@"
+         var select = db.CreateCommand(@"
                         SELECT COUNT(id)
                         FROM public.session
                         ");
@@ -24,7 +24,7 @@ public class Session(NpgsqlDataSource db)
         }
         if (count is 0)
         {
-            using var insert = db.CreateCommand(@"
+             var insert = db.CreateCommand(@"
                             INSERT INTO public.session(
 	                        time)
 	                        VALUES (
@@ -33,10 +33,11 @@ public class Session(NpgsqlDataSource db)
                             SET time = CURRENT_TIMESTAMP;
                             ");
             insert.ExecuteNonQuery();
+            insert.Dispose();
         }
     }
 
-    public bool EntryPointTimer()
+    public static bool EntryPointTimer(NpgsqlDataSource db)
     {
         bool gameOver = false;
         using var cmd = db.CreateCommand(@"
@@ -52,13 +53,9 @@ public class Session(NpgsqlDataSource db)
         while (reader.Read())
         {
             sessionStart = reader.GetString(0);
-
             var split = sessionStart.Split(":");
 
             TimeOnly startTime = new(int.Parse(split[0]), int.Parse(split[1]), int.Parse(split[2]));
-
-
-
 
             TimeSpan timeElapsed = currentTime - startTime;
             if ((timeElapsed.TotalSeconds > 360)) // 4 minuter tills det blir "game over"
@@ -69,14 +66,11 @@ public class Session(NpgsqlDataSource db)
             else
             {
                 gameOver = false;
-
             }
-
         }
-
         return gameOver;
     }
-    public TimeSpan ElapsedTime()
+    public static TimeSpan ElapsedTime(NpgsqlDataSource db)
     {
         using var sessionStart = db.CreateCommand(@"
             SELECT to_char(""time"", 'HH24:MI:SS')
@@ -96,10 +90,9 @@ public class Session(NpgsqlDataSource db)
         TimeSpan interval = currentTime - startTime;
         return interval;
     }
-    public string FormattedTime()
+    public static string FormattedTime(NpgsqlDataSource db)
     {
-        TimeSpan elapsedTime = ElapsedTime();
-
+        TimeSpan elapsedTime = ElapsedTime(db);
         return elapsedTime.ToString(@"hh\:mm\:ss");
     }
 }

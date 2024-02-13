@@ -3,12 +3,9 @@ using System.Net;
 using System.Text;
 namespace real_time_horror_group3;
 
-public class Player(NpgsqlDataSource db)
+public class Player()
 {
-    private GameEvent gameEvent = new(db);    
-    private Session session = new(db);
-    private Check check = new(db);
-    public  string Create(HttpListenerRequest request, HttpListenerResponse response)
+    public static string Create(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
     {
         StreamReader reader = new(request.InputStream, request.ContentEncoding);
         string name = reader.ReadToEnd().ToLower();
@@ -27,9 +24,9 @@ public class Player(NpgsqlDataSource db)
         return message;
     }
 
-    public  string Ready(HttpListenerRequest request, HttpListenerResponse response)
+    public static string Ready(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
     {
-        string playerName =  Verify(request, response);
+        string playerName =  Verify(db, request, response);
 
          using var cmd = db.CreateCommand(@"
         UPDATE public.player
@@ -46,7 +43,7 @@ public class Player(NpgsqlDataSource db)
     }
 
 
-    public  string Move(HttpListenerRequest request, HttpListenerResponse response)
+    public static string Move(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
 
     {
         StreamReader reader = new(request.InputStream, request.ContentEncoding);
@@ -65,7 +62,7 @@ public class Player(NpgsqlDataSource db)
                 break;
         }
 
-        string playerName =  Verify(request, response);
+        string playerName =  Verify(db, request, response);
 
          using var cmd = db.CreateCommand(@"
                         UPDATE public.player
@@ -77,14 +74,14 @@ public class Player(NpgsqlDataSource db)
 
          cmd.ExecuteNonQuery();
 
-        gameEvent.RandomTrigger(session, gameEvent);
+        GameEvent.RandomTrigger(db);
 
         response.StatusCode = (int)HttpStatusCode.OK;
-        string message = $"{ check.EntryPoints(request, response, playerName)}";
+        string message = $"{ Check.EntryPoints(db, request, response, playerName)}";
 
         return message;
     }
-    public  string Verify(HttpListenerRequest request, HttpListenerResponse response)
+    public static string Verify(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
     {
         string? path = request.Url?.AbsolutePath;
         string? name = path?.Split('/')[1];
@@ -106,7 +103,7 @@ public class Player(NpgsqlDataSource db)
         return username;
     }
 
-    public  bool CheckAllPlayersReady(HttpListenerResponse response)
+    public static bool CheckAllPlayersReady(NpgsqlDataSource db, HttpListenerResponse response)
     {
          using var cmd = db.CreateCommand(@"
         SELECT COUNT(*)

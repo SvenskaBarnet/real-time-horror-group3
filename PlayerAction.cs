@@ -8,11 +8,9 @@ using System.Threading.Tasks;
 
 namespace real_time_horror_group3;
 
-public class PlayerAction(NpgsqlDataSource db)
+public class PlayerAction()
 {
-    private GameEvent gameEvent = new(db);
-    private Session session = new(db);
-    public string Lock(string type, Check check, Player player, HttpListenerRequest request, HttpListenerResponse response)
+    public static string Lock(NpgsqlDataSource db, string type, HttpListenerRequest request, HttpListenerResponse response)
     {
         StreamReader reader = new(request.InputStream, request.ContentEncoding);
         string lockName = reader.ReadToEnd();
@@ -24,13 +22,13 @@ public class PlayerAction(NpgsqlDataSource db)
             WHERE name = $1 AND room_id = $2 AND type = $3;");
 
         cmd.Parameters.AddWithValue(lockName);
-        cmd.Parameters.AddWithValue(check.PlayerPosition(request, response, player));
+        cmd.Parameters.AddWithValue(Check.PlayerPosition(db, request, response));
         cmd.Parameters.AddWithValue(type);
 
         cmd.ExecuteNonQuery();
         string message = $"{type} {lockName} is now locked";
 
-        gameEvent.RandomTrigger(session, gameEvent);
+        GameEvent.RandomTrigger(db);
 
         return message;
     }

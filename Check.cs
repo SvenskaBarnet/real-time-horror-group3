@@ -4,13 +4,11 @@ using System.Text;
 
 namespace real_time_horror_group3;
 
-public class Check(NpgsqlDataSource db)
+public class Check()
 {
-    private GameEvent gameEvent = new GameEvent(db);
-    private Session session = new Session(db);
-    public string Windows(HttpListenerRequest request, HttpListenerResponse response, Player player)
+    public static string Windows(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
     {
-        int roomId = PlayerPosition(request, response, player);
+        int roomId = PlayerPosition(db, request, response);
 
         using var windows = db.CreateCommand(@"
                         SELECT name, is_locked
@@ -34,24 +32,24 @@ public class Check(NpgsqlDataSource db)
             }
         }
 
-        gameEvent.RandomTrigger(session, gameEvent);
+        GameEvent.RandomTrigger(db);
         response.StatusCode = (int)HttpStatusCode.OK;
         return message;
     }
-    public  string Doors(HttpListenerRequest request, HttpListenerResponse response, Player player)
+    public static string Doors(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
     {
-        int roomId =  PlayerPosition(request, response, player);
+        int roomId = PlayerPosition(db, request, response);
 
-         using var windows = db.CreateCommand(@"
+        using var windows = db.CreateCommand(@"
                         SELECT name, is_locked
                         FROM entry_point
                         WHERE room_id = $1 AND type = 'Door';
                         ");
         windows.Parameters.AddWithValue(roomId);
-        var reader2 =  windows.ExecuteReader();
+        var reader2 = windows.ExecuteReader();
 
         string message = string.Empty;
-        while ( reader2.Read())
+        while (reader2.Read())
         {
             switch (reader2.GetBoolean(1))
             {
@@ -63,14 +61,14 @@ public class Check(NpgsqlDataSource db)
                     break;
             }
         }
-        gameEvent.RandomTrigger(session, gameEvent);
+        GameEvent.RandomTrigger(db);
         response.StatusCode = (int)HttpStatusCode.OK;
         return message;
     }
 
-    public  string EntryPoints(HttpListenerRequest request, HttpListenerResponse response, string playerName)
+    public static string EntryPoints(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response, string playerName)
     {
-         using var playerPos = db.CreateCommand(@"
+        using var playerPos = db.CreateCommand(@"
             SELECT p.location, r.name
             FROM public.player p
             JOIN public.room r ON r.id = p.location
@@ -78,56 +76,56 @@ public class Check(NpgsqlDataSource db)
             ");
 
         playerPos.Parameters.AddWithValue(playerName ?? string.Empty);
-        var reader1 =  playerPos.ExecuteReader();
+        var reader1 = playerPos.ExecuteReader();
 
         int roomId = 0;
         string roomName = string.Empty;
-        if ( reader1.Read())
+        if (reader1.Read())
         {
             roomId = reader1.GetInt32(0);
             roomName = reader1.GetString(1);
         }
 
-        int doors =  GetEntries(roomId, "Door");
-        int windows =  GetEntries(roomId, "Window");
+        int doors = GetEntries(db, roomId, "Door");
+        int windows = GetEntries(db, roomId, "Window");
 
         string message = $"You are in the {roomName}. \nThere is {doors} door(s) and {windows} window(s).";
 
         return message;
     }
 
-     private int GetEntries(int roomId, string type)
+    private static int GetEntries(NpgsqlDataSource db, int roomId, string type)
     {
-         using var entryPoints = db.CreateCommand(@"
+        using var entryPoints = db.CreateCommand(@"
             SELECT COUNT(type) 
             FROM entry_point
             WHERE room_id = $1 AND type = $2;
             ");
         entryPoints.Parameters.AddWithValue(roomId);
         entryPoints.Parameters.AddWithValue(type);
-        var reader2 =  entryPoints.ExecuteReader();
+        var reader2 = entryPoints.ExecuteReader();
 
         int count = 0;
-        while ( reader2.Read())
+        while (reader2.Read())
         {
             count = reader2.GetInt32(0);
         }
 
         return count;
     }
-    public int PlayerPosition(HttpListenerRequest request, HttpListenerResponse response, Player player)
+    public static int PlayerPosition(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
     {
         using var playerPos = db.CreateCommand(@"
                         SELECT location
                         FROM public.player
                         WHERE name = $1
                         ");
-        playerPos.Parameters.AddWithValue(player.Verify(request, response));
+        playerPos.Parameters.AddWithValue(Player.Verify(db, request, response));
 
-        var reader =  playerPos.ExecuteReader();
+        var reader = playerPos.ExecuteReader();
         int roomId = 0;
 
-        if ( reader.Read())
+        if (reader.Read())
         {
             roomId = reader.GetInt32(0);
         }

@@ -24,12 +24,12 @@ Console.CancelKeyPress += delegate (object? sender, ConsoleCancelEventArgs e)
 
 int port = 3000;
 HttpListener listener = new();
-
+State state = new State(listener, db);
 listener.Prefixes.Add($"http://localhost:{port}/");
 listener.Start();
 Console.WriteLine($"Server listening on port: {port}");
 
-listener.BeginGetContext(new AsyncCallback(Router), listener);
+listener.BeginGetContext(new AsyncCallback(Router), state);
 while (listen)
 {
 
@@ -40,46 +40,44 @@ Console.WriteLine("Server stopped");
 
 void Router(IAsyncResult result)
 {
-    if (result.AsyncState is HttpListener listener)
+    if (result.AsyncState is State state)
     {
+        HttpListener listener = state.listener;
+        var db = state.db;
         HttpListenerContext context = listener.EndGetContext(result);
         HttpListenerResponse response = context.Response;
         HttpListenerRequest request = context.Request;
 
         response.ContentType = "text/plain";
-        Player player = new(db);
-        Check check = new(db);
-        PlayerAction action = new(db);
-        Session session = new(db);
-        GameMessage gameMessage = new();
 
-        if (session.EntryPointTimer() == false)
+        if (Session.EntryPointTimer(db) == false)
         {
             switch (request.Url?.AbsolutePath.ToLower())
             {
                 case (string path) when path == "/new-player":
                     if (request.HttpMethod is "POST")
                     {
-                        message = player.Create(request, response);
+
+                        message = Player.Create(db, request, response);
                     }
                     break;
 
-                case (string path) when path == $"/{player.Verify(request, response)}/ready":
+                case (string path) when path == $"/{Player.Verify(db, request, response)}/ready":
                     if (request.HttpMethod == "PATCH")
                     {
-                        message = player.Ready(request, response);
+                        message = Player.Ready(db, request, response);
                     }
                     break;
 
-                case (string path) when path == $"/{player.Verify(request, response)}/start":
+                case (string path) when path == $"/{Player.Verify(db, request, response)}/start":
                     if (request.HttpMethod is "GET")
                     {
-                        bool playersReady = player.CheckAllPlayersReady(response);
+                        bool playersReady = Player.CheckAllPlayersReady(db, response);
                         if (playersReady)
                         {
                             Intro intro = new Intro();
-                            message = intro.Story(response);
-                            session.Start();
+                            message = Intro.Story(response);
+                            Session.Start(db);
                             sessionStarted = true;
                         }
                         else
@@ -90,12 +88,12 @@ void Router(IAsyncResult result)
                     }
                     break;
 
-                case (string path) when path == $"/{player.Verify(request, response)}/move":
+                case (string path) when path == $"/{Player.Verify(db, request, response)}/move":
                     if (sessionStarted)
                     {
                         if (request.HttpMethod is "PATCH")
                         {
-                            message = player.Move(request, response);
+                            message = Player.Move(db, request, response);
                         }
                     }
                     else
@@ -105,16 +103,16 @@ void Router(IAsyncResult result)
                     }
                     break;
 
-                case (string path) when path == $"/{player.Verify(request, response)}/windows":
+                case (string path) when path == $"/{Player.Verify(db, request, response)}/windows":
                     if (sessionStarted)
                     {
                         if (request.HttpMethod is "GET")
                         {
-                            message = check.Windows(request, response, player);
+                            message = Check.Windows(db, request, response);
                         }
                         else if (request.HttpMethod is "PATCH")
                         {
-                            message = action.Lock("Window", check, player, request, response);
+                            message = PlayerAction.Lock(db, "Window", request, response);
                         }
                     }
                     else
@@ -124,16 +122,16 @@ void Router(IAsyncResult result)
                     }
                     break;
 
-                case (string path) when path == $"/{player.Verify(request, response)}/doors":
+                case (string path) when path == $"/{Player.Verify(db,request, response)}/doors":
                     if (sessionStarted)
                     {
                         if (request.HttpMethod is "GET")
                         {
-                            message = check.Doors(request, response, player);
+                            message = Check.Doors(db, request, response);
                         }
                         else if (request.HttpMethod is "PATCH")
                         {
-                            message = action.Lock("Door", check, player, request, response);
+                            message = PlayerAction.Lock(db, "Door", request, response);
                         }
                     }
                     else
@@ -143,12 +141,12 @@ void Router(IAsyncResult result)
                     }
                     break;
 
-                case (string path) when path == $"/{player.Verify(request, response)}/time":
+                case (string path) when path == $"/{Player.Verify(db, request, response)}/time":
                     if (sessionStarted)
                     {
                         if (request.HttpMethod is "GET")
                         {
-                            message = session.FormattedTime();
+                            message = Session.FormattedTime(db);
                         }
                     }
                     else
@@ -159,11 +157,11 @@ void Router(IAsyncResult result)
                     break;
 
                 case (string path) when path == "/help":
-                    message = gameMessage.Help(response);
+                    message = GameMessage.Help(response);
                     break;
 
                 default:
-                    message = gameMessage.NotFound(response);
+                    message = GameMessage.NotFound(response);
                     break;
             }
         }
@@ -178,7 +176,9 @@ void Router(IAsyncResult result)
         response.OutputStream.Write(buffer);
         response.OutputStream.Close();
         message = string.Empty;
-
-        listener.BeginGetContext(new AsyncCallback(Router), listener);
+        db.Dispose();
+        listener.BeginGetContext(new AsyncCallback(Router), state);
     }
 }
+
+record State(HttpListener listener, NpgsqlDataSource db);
