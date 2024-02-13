@@ -7,7 +7,8 @@ using real_time_horror_group3;
 
 
 string dbUri = "Host=localhost;Port=5455;Username=postgres;Password=postgres;Database=notsohomealone";
-await using var db = NpgsqlDataSource.Create(dbUri);
+using var db = NpgsqlDataSource.Create(dbUri);
+
 Database database = new(db);
 await database.Create();
 
@@ -17,19 +18,19 @@ string? message = string.Empty;
 
 Console.CancelKeyPress += delegate (object? sender, ConsoleCancelEventArgs e)
 {
-    Console.WriteLine("Interupting cancel event");
+    Console.WriteLine("Interrupting cancel event");
     e.Cancel = true;
     listen = false;
 };
 
 int port = 3000;
 HttpListener listener = new();
-
+State state = new State(listener, db);
 listener.Prefixes.Add($"http://localhost:{port}/");
 listener.Start();
 Console.WriteLine($"Server listening on port: {port}");
 
-listener.BeginGetContext(new AsyncCallback(Router), listener);
+listener.BeginGetContext(new AsyncCallback(Router), state);
 while (listen)
 {
 
@@ -38,49 +39,47 @@ while (listen)
 listener.Stop();
 Console.WriteLine("Server stopped");
 
-
-async void Router(IAsyncResult result)
+void Router(IAsyncResult result)
 {
-    if (result.AsyncState is HttpListener listener)
+    if (result.AsyncState is State state)
     {
+        HttpListener listener = state.listener;
+        var db = state.db;
+
         HttpListenerContext context = listener.EndGetContext(result);
         HttpListenerResponse response = context.Response;
         HttpListenerRequest request = context.Request;
 
         response.ContentType = "text/plain";
-        Player player = new(db);
-        Check check = new(db);
-        PlayerAction action = new(db);
-        Session session = new(db);
-        GameMessage gameMessage = new();
 
-        if (await session.EntryPointTimer() == false)
+        if (Session.EntryPointTimer(db) == false)
         {
             switch (request.Url?.AbsolutePath.ToLower())
             {
                 case (string path) when path == "/new-player":
                     if (request.HttpMethod is "POST")
                     {
-                        message = await player.Create(request, response);
-                    }
-                    break;
-                    
-                case (string path) when path == $"/{await player.Verify(request, response)}/ready":
-                    if (request.HttpMethod == "PATCH")
-                    {
-                        message = await player.Ready(request, response);
+
+                        message = Player.Create(db, request, response);
                     }
                     break;
 
-                case (string path) when path == $"/{await player.Verify(request, response)}/start":
+                case (string path) when path == $"/{Player.Verify(db, request, response)}/ready":
+                    if (request.HttpMethod == "PATCH")
+                    {
+                        message = Player.Ready(db, request, response);
+                    }
+                    break;
+
+                case (string path) when path == $"/{Player.Verify(db, request, response)}/start":
                     if (request.HttpMethod is "GET")
                     {
-                        bool playersReady = await player.CheckAllPlayersReady(response);
+                        bool playersReady = Player.CheckAllPlayersReady(db, response);
                         if (playersReady)
                         {
                             Intro intro = new Intro();
-                            message = await intro.Story(response);
-                            await session.Start();
+                            message = Intro.Story(response);
+                            Session.Start(db);
                             sessionStarted = true;
                         }
                         else
@@ -91,50 +90,12 @@ async void Router(IAsyncResult result)
                     }
                     break;
 
-                case (string path) when path == $"/{await player.Verify(request, response)}/move":
+                case (string path) when path == $"/{Player.Verify(db, request, response)}/move":
                     if (sessionStarted)
                     {
                         if (request.HttpMethod is "PATCH")
                         {
-                            message = await player.Move(request, response);
-                        }
-                    }
-                    else
-                    {
-                        message = "You need to start game to play";
-                        response.StatusCode = (int)HttpStatusCode.OK;
-                    }
-                    break;
-                    
-                case (string path) when path == $"/{await player.Verify(request, response)}/windows":
-                    if (sessionStarted)
-                    {
-                        if (request.HttpMethod is "GET")
-                        {
-                            message = await check.Windows(request, response, player);
-                        }
-                        else if (request.HttpMethod is "PATCH")
-                        {
-                            message = await action.Lock("Window", check, player, request, response);
-                        }
-                    }
-                    else
-                    {
-                        message = "You need to start game to play";
-                        response.StatusCode = (int)HttpStatusCode.OK;
-                    }
-                    break;
-                    
-                case (string path) when path == $"/{await player.Verify(request, response)}/doors":
-                    if (sessionStarted)
-                    {
-                        if (request.HttpMethod is "GET")
-                        {
-                            message = await check.Doors(request, response, player);
-                        }
-                        else if (request.HttpMethod is "PATCH")
-                        {
-                            message = await action.Lock("Door", check, player, request, response);
+                            message = Player.Move(db, request, response);
                         }
                     }
                     else
@@ -144,12 +105,50 @@ async void Router(IAsyncResult result)
                     }
                     break;
 
-                case (string path) when path == $"/{await player.Verify(request, response)}/time":
+                case (string path) when path == $"/{Player.Verify(db, request, response)}/windows":
                     if (sessionStarted)
                     {
                         if (request.HttpMethod is "GET")
                         {
-                            message = await session.FormattedTime();
+                            message = Check.Windows(db, request, response);
+                        }
+                        else if (request.HttpMethod is "PATCH")
+                        {
+                            message = PlayerAction.Lock(db, "Window", request, response);
+                        }
+                    }
+                    else
+                    {
+                        message = "You need to start game to play";
+                        response.StatusCode = (int)HttpStatusCode.OK;
+                    }
+                    break;
+
+                case (string path) when path == $"/{Player.Verify(db,request, response)}/doors":
+                    if (sessionStarted)
+                    {
+                        if (request.HttpMethod is "GET")
+                        {
+                            message = Check.Doors(db, request, response);
+                        }
+                        else if (request.HttpMethod is "PATCH")
+                        {
+                            message = PlayerAction.Lock(db, "Door", request, response);
+                        }
+                    }
+                    else
+                    {
+                        message = "You need to start game to play";
+                        response.StatusCode = (int)HttpStatusCode.OK;
+                    }
+                    break;
+
+                case (string path) when path == $"/{Player.Verify(db, request, response)}/time":
+                    if (sessionStarted)
+                    {
+                        if (request.HttpMethod is "GET")
+                        {
+                            message = Session.FormattedTime(db);
                         }
                     }
                     else
@@ -160,11 +159,11 @@ async void Router(IAsyncResult result)
                     break;
 
                 case (string path) when path == "/help":
-                    message = gameMessage.Help(response);
+                    message = GameMessage.Help(response);
                     break;
 
                 default:
-                    message = gameMessage.NotFound(response);
+                    message = GameMessage.NotFound(response);
                     break;
             }
         }
@@ -180,6 +179,8 @@ async void Router(IAsyncResult result)
         response.OutputStream.Close();
         message = string.Empty;
 
-        listener.BeginGetContext(new AsyncCallback(Router), listener);
+        listener.BeginGetContext(new AsyncCallback(Router), state);
     }
 }
+
+record State(HttpListener listener, NpgsqlDataSource db);
