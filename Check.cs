@@ -5,6 +5,35 @@ namespace real_time_horror_group3;
 
 public class Check()
 {
+    public static string Room(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
+    {
+        string? message = string.Empty;
+
+        int roomId = PlayerPosition(db, request, response);
+
+        NpgsqlCommand checkRoom = db.CreateCommand(@"
+            SELECT COUNT(id)
+            FROM room
+            WHERE id = $1 AND has_danger = true
+            ");
+        checkRoom.Parameters.AddWithValue(roomId);
+        using var reader = checkRoom.ExecuteReader();
+
+        if (reader.Read())
+        {
+            if (reader.GetInt32(0) != 0)
+            {
+                message = "You found a dangerous object in this room, be careful!";
+            }
+            else
+            {
+                message = "This room is safe, no dangers to be found.";
+            }
+        }
+        reader.Close();
+        response.StatusCode = (int)HttpStatusCode.OK;
+        return message;
+    }
     public static string Windows(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
     {
         int roomId = PlayerPosition(db, request, response);
