@@ -179,7 +179,6 @@ void Router(IAsyncResult result)
         response.OutputStream.Close();
         message = string.Empty;
 
-        db.Dispose();
         listener.BeginGetContext(new AsyncCallback(Router), state);
     }
 }

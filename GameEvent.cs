@@ -1,6 +1,6 @@
 ﻿using Npgsql;
 
-namespace real_time_horror_group3; 
+namespace real_time_horror_group3;
 public class GameEvent()
 {
     public static void UnlockEntry(NpgsqlDataSource db)
@@ -9,11 +9,11 @@ public class GameEvent()
             SELECT COUNT(id)
             FROM public.entry_point;
             ");
-        var reader1 =  entryCount.ExecuteReader();
+        var reader1 = entryCount.ExecuteReader();
         int totalEntry = 0;
-        if (reader1.Read()) 
+        if (reader1.Read())
         {
-            totalEntry = reader1.GetInt32(0); 
+            totalEntry = reader1.GetInt32(0);
         }
 
         Random random = new Random();
@@ -25,12 +25,12 @@ public class GameEvent()
             WHERE id = $1;
             ");
         lockEntry.Parameters.AddWithValue(randomEntry);
-         lockEntry.ExecuteNonQuery();
+        lockEntry.ExecuteNonQuery();
     }
 
     public static void RandomTrigger(NpgsqlDataSource db)
     {
-        TimeSpan timeElapsed =  Session.ElapsedTime(db);
+        TimeSpan timeElapsed = Session.ElapsedTime(db);
 
         double baseProbability = 0.1;
         double exponentialRate = 0.05;
@@ -43,6 +43,7 @@ public class GameEvent()
 
         if (randomValue <= probability)
         {
-             GameEvent.UnlockEntry(db);
+            GameEvent.UnlockEntry(db);
         }
     }
+}
