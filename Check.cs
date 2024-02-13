@@ -1,6 +1,5 @@
 ﻿using Npgsql;
 using System.Net;
-using System.Text;
 
 namespace real_time_horror_group3;
 
@@ -10,7 +9,7 @@ public class Check()
     {
         int roomId = PlayerPosition(db, request, response);
 
-        using var windows = db.CreateCommand(@"
+        var windows = db.CreateCommand(@"
                         SELECT name, is_locked
                         FROM entry_point
                         WHERE room_id = $1 AND type = 'Window';
@@ -40,7 +39,7 @@ public class Check()
     {
         int roomId = PlayerPosition(db, request, response);
 
-        using var windows = db.CreateCommand(@"
+        var windows = db.CreateCommand(@"
                         SELECT name, is_locked
                         FROM entry_point
                         WHERE room_id = $1 AND type = 'Door';
@@ -68,7 +67,7 @@ public class Check()
 
     public static string EntryPoints(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response, string playerName)
     {
-        using var playerPos = db.CreateCommand(@"
+        var playerPos = db.CreateCommand(@"
             SELECT p.location, r.name
             FROM public.player p
             JOIN public.room r ON r.id = p.location
@@ -96,7 +95,7 @@ public class Check()
 
     private static int GetEntries(NpgsqlDataSource db, int roomId, string type)
     {
-        using var entryPoints = db.CreateCommand(@"
+        var entryPoints = db.CreateCommand(@"
             SELECT COUNT(type) 
             FROM entry_point
             WHERE room_id = $1 AND type = $2;
@@ -115,7 +114,7 @@ public class Check()
     }
     public static int PlayerPosition(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
     {
-        using var playerPos = db.CreateCommand(@"
+        var playerPos = db.CreateCommand(@"
                         SELECT location
                         FROM public.player
                         WHERE name = $1

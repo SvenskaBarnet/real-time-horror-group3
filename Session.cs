@@ -1,8 +1,4 @@
 ﻿using Npgsql;
-using System.Globalization;
-using System.Linq.Expressions;
-using System.Net;
-using System.Runtime.Serialization;
 
 namespace real_time_horror_group3;
 
@@ -11,7 +7,7 @@ public class Session()
     public static void Start(NpgsqlDataSource db)
     {
         string message = string.Empty;
-         var select = db.CreateCommand(@"
+        var select = db.CreateCommand(@"
                         SELECT COUNT(id)
                         FROM public.session
                         ");
@@ -24,7 +20,7 @@ public class Session()
         }
         if (count is 0)
         {
-             var insert = db.CreateCommand(@"
+            var insert = db.CreateCommand(@"
                             INSERT INTO public.session(
 	                        time)
 	                        VALUES (
@@ -40,7 +36,7 @@ public class Session()
     public static bool EntryPointTimer(NpgsqlDataSource db)
     {
         bool gameOver = false;
-        using var cmd = db.CreateCommand(@"
+        var cmd = db.CreateCommand(@"
         SELECT to_char(""time"", 'HH24:MI:SS')
         FROM public.entry_point
         WHERE time is not null;
@@ -72,7 +68,7 @@ public class Session()
     }
     public static TimeSpan ElapsedTime(NpgsqlDataSource db)
     {
-        using var sessionStart = db.CreateCommand(@"
+        var sessionStart = db.CreateCommand(@"
             SELECT to_char(""time"", 'HH24:MI:SS')
             FROM public.session 
             WHERE time is not null;

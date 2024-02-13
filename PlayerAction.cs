@@ -1,10 +1,5 @@
 ﻿using Npgsql;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace real_time_horror_group3;
 
@@ -15,7 +10,7 @@ public class PlayerAction()
         StreamReader reader = new(request.InputStream, request.ContentEncoding);
         string lockName = reader.ReadToEnd();
 
-        using var cmd = db.CreateCommand(@$"
+        var cmd = db.CreateCommand(@$"
 
             UPDATE entry_point
             SET is_locked = true

@@ -8,6 +8,7 @@ using real_time_horror_group3;
 
 string dbUri = "Host=localhost;Port=5455;Username=postgres;Password=postgres;Database=notsohomealone";
 using var db = NpgsqlDataSource.Create(dbUri);
+
 Database database = new(db);
 await database.Create();
 
@@ -44,6 +45,7 @@ void Router(IAsyncResult result)
     {
         HttpListener listener = state.listener;
         var db = state.db;
+
         HttpListenerContext context = listener.EndGetContext(result);
         HttpListenerResponse response = context.Response;
         HttpListenerRequest request = context.Request;
@@ -176,6 +178,7 @@ void Router(IAsyncResult result)
         response.OutputStream.Write(buffer);
         response.OutputStream.Close();
         message = string.Empty;
+
         db.Dispose();
         listener.BeginGetContext(new AsyncCallback(Router), state);
     }

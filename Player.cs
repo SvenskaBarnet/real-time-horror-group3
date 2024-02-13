@@ -1,6 +1,5 @@
 ﻿using Npgsql;
 using System.Net;
-using System.Text;
 namespace real_time_horror_group3;
 
 public class Player()
@@ -10,13 +9,13 @@ public class Player()
         StreamReader reader = new(request.InputStream, request.ContentEncoding);
         string name = reader.ReadToEnd().ToLower();
 
-         using var cmd = db.CreateCommand(@"
+        var cmd = db.CreateCommand(@"
                     INSERT INTO public.player
                     (name, location)
                     VALUES($1, 1);
                     ");
         cmd.Parameters.AddWithValue(name);
-         cmd.ExecuteNonQuery();
+        cmd.ExecuteNonQuery();
 
         string message = $"Player '{name}' has been created. Type /ready when you are ready. Game can only start when all players are ready.";
         response.StatusCode = (int)HttpStatusCode.Created;
@@ -26,16 +25,16 @@ public class Player()
 
     public static string Ready(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
     {
-        string playerName =  Verify(db, request, response);
+        string playerName = Verify(db, request, response);
 
-         using var cmd = db.CreateCommand(@"
+        var cmd = db.CreateCommand(@"
         UPDATE public.player
         SET is_ready = true
         WHERE name = $1;
     ");
         cmd.Parameters.AddWithValue(playerName);
 
-         cmd.ExecuteNonQuery();
+        cmd.ExecuteNonQuery();
         response.StatusCode = (int)HttpStatusCode.OK;
 
         string message = $"{playerName}, you are ready!";
@@ -62,9 +61,9 @@ public class Player()
                 break;
         }
 
-        string playerName =  Verify(db, request, response);
+        string playerName = Verify(db, request, response);
 
-         using var cmd = db.CreateCommand(@"
+        var cmd = db.CreateCommand(@"
                         UPDATE public.player
                         SET location = $1
                         WHERE name = $2;
@@ -72,12 +71,12 @@ public class Player()
         cmd.Parameters.AddWithValue(room);
         cmd.Parameters.AddWithValue(playerName);
 
-         cmd.ExecuteNonQuery();
+        cmd.ExecuteNonQuery();
 
         GameEvent.RandomTrigger(db);
 
         response.StatusCode = (int)HttpStatusCode.OK;
-        string message = $"{ Check.EntryPoints(db, request, response, playerName)}";
+        string message = $"{Check.EntryPoints(db, request, response, playerName)}";
 
         return message;
     }
@@ -86,16 +85,16 @@ public class Player()
         string? path = request.Url?.AbsolutePath;
         string? name = path?.Split('/')[1];
 
-         using var cmd = db.CreateCommand(@"
+        using var cmd = db.CreateCommand(@"
             SELECT (name)
             FROM public.player
             WHERE name = $1
             ");
         cmd.Parameters.AddWithValue(name ?? string.Empty);
-        var reader =  cmd.ExecuteReader();
+        var reader = cmd.ExecuteReader();
 
         string username = string.Empty;
-        if ( reader.Read())
+        if (reader.Read())
         {
             username = reader.GetString(0);
         }
@@ -105,29 +104,29 @@ public class Player()
 
     public static bool CheckAllPlayersReady(NpgsqlDataSource db, HttpListenerResponse response)
     {
-         using var cmd = db.CreateCommand(@"
+        using var cmd = db.CreateCommand(@"
         SELECT COUNT(*)
         FROM public.player
         ");
 
-        var reader1 =  cmd.ExecuteReader();
+        var reader1 = cmd.ExecuteReader();
 
         int totalPlayers = 0;
-        if ( reader1.Read())
+        if (reader1.Read())
         {
             totalPlayers = reader1.GetInt32(0);
         }
 
-         using var cmd1 = db.CreateCommand(@"
+        var cmd1 = db.CreateCommand(@"
         SELECT COUNT(*) 
         FROM public.player 
         WHERE is_ready = true
         ");
 
-        var reader2 =  cmd1.ExecuteReader();
+        var reader2 = cmd1.ExecuteReader();
 
         int readyPlayers = 0;
-        if ( reader2.Read())
+        if (reader2.Read())
         {
             readyPlayers = reader2.GetInt32(0);
         }

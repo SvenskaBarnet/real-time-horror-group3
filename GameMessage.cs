@@ -1,7 +1,4 @@
-﻿using Npgsql;
-using System.Diagnostics.CodeAnalysis;
-using System.Net;
-using System.Text;
+﻿using System.Net;
 namespace real_time_horror_group3;
 
 public class GameMessage()
