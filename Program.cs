@@ -143,6 +143,24 @@ void Router(IAsyncResult result)
                     }
                     break;
 
+                case (string path) when path == $"/{Player.Verify(db,request, response)}/room":
+                    if (sessionStarted)
+                    {
+                        if (request.HttpMethod is "GET")
+                        {
+                            message = Check.Room(db, request, response);
+                        }
+                        else if (request.HttpMethod is "PATCH")
+                        {
+                        }
+                    }
+                    else
+                    {
+                        message = "You need to start game to play";
+                        response.StatusCode = (int)HttpStatusCode.OK;
+                    }
+                    break;
+
                 case (string path) when path == $"/{Player.Verify(db, request, response)}/time":
                     if (sessionStarted)
                     {
