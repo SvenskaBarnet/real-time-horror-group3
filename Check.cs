@@ -32,6 +32,7 @@ public class Check()
         }
         reader.Close();
         response.StatusCode = (int)HttpStatusCode.OK;
+        GameEvent.RandomTrigger(db);
         return message;
     }
     public static string Windows(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
