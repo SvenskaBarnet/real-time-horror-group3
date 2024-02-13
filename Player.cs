@@ -1,25 +1,21 @@
 ﻿using Npgsql;
 using System.Net;
-using System.Text;
 namespace real_time_horror_group3;
 
-public class Player(NpgsqlDataSource db)
+public class Player()
 {
-    private GameEvent gameEvent = new(db);    
-    private Session session = new(db);
-    private Check check = new(db);
-    public async Task<string> Create(HttpListenerRequest request, HttpListenerResponse response)
+    public static string Create(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
     {
         StreamReader reader = new(request.InputStream, request.ContentEncoding);
         string name = reader.ReadToEnd().ToLower();
 
-        await using var cmd = db.CreateCommand(@"
+        var cmd = db.CreateCommand(@"
                     INSERT INTO public.player
                     (name, location)
                     VALUES($1, 1);
                     ");
         cmd.Parameters.AddWithValue(name);
-        await cmd.ExecuteNonQueryAsync();
+        cmd.ExecuteNonQuery();
 
         string message = $"Player '{name}' has been created. Type /ready when you are ready. Game can only start when all players are ready.";
         response.StatusCode = (int)HttpStatusCode.Created;
@@ -27,18 +23,18 @@ public class Player(NpgsqlDataSource db)
         return message;
     }
 
-    public async Task<string> Ready(HttpListenerRequest request, HttpListenerResponse response)
+    public static string Ready(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
     {
-        string playerName = await Verify(request, response);
+        string playerName = Verify(db, request, response);
 
-        await using var cmd = db.CreateCommand(@"
+        var cmd = db.CreateCommand(@"
         UPDATE public.player
         SET is_ready = true
         WHERE name = $1;
     ");
         cmd.Parameters.AddWithValue(playerName);
 
-        await cmd.ExecuteNonQueryAsync();
+        cmd.ExecuteNonQuery();
         response.StatusCode = (int)HttpStatusCode.OK;
 
         string message = $"{playerName}, you are ready!";
@@ -46,7 +42,7 @@ public class Player(NpgsqlDataSource db)
     }
 
 
-    public async Task<string> Move(HttpListenerRequest request, HttpListenerResponse response)
+    public static string Move(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
 
     {
         StreamReader reader = new(request.InputStream, request.ContentEncoding);
@@ -65,9 +61,9 @@ public class Player(NpgsqlDataSource db)
                 break;
         }
 
-        string playerName = await Verify(request, response);
+        string playerName = Verify(db, request, response);
 
-        await using var cmd = db.CreateCommand(@"
+        var cmd = db.CreateCommand(@"
                         UPDATE public.player
                         SET location = $1
                         WHERE name = $2;
@@ -75,67 +71,71 @@ public class Player(NpgsqlDataSource db)
         cmd.Parameters.AddWithValue(room);
         cmd.Parameters.AddWithValue(playerName);
 
-        await cmd.ExecuteNonQueryAsync();
+        cmd.ExecuteNonQuery();
 
-        gameEvent.RandomTrigger(session, gameEvent);
+        GameEvent.RandomTrigger(db);
 
         response.StatusCode = (int)HttpStatusCode.OK;
-        string message = $"{await check.EntryPoints(request, response, playerName)}";
+        string message = $"{Check.EntryPoints(db, request, response, playerName)}";
 
         return message;
     }
-    public async Task<string> Verify(HttpListenerRequest request, HttpListenerResponse response)
+    public static string Verify(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
     {
         string? path = request.Url?.AbsolutePath;
         string? name = path?.Split('/')[1];
 
-        await using var cmd = db.CreateCommand(@"
+        var cmd = db.CreateCommand(@"
             SELECT (name)
             FROM public.player
             WHERE name = $1
             ");
         cmd.Parameters.AddWithValue(name ?? string.Empty);
-        var reader = await cmd.ExecuteReaderAsync();
+        using var reader = cmd.ExecuteReader();
 
         string username = string.Empty;
-        if (await reader.ReadAsync())
+        if (reader.Read())
         {
             username = reader.GetString(0);
         }
 
-        return username; 
-       
+        reader.Close();
+        return username;
     }
 
-    public async Task<bool> CheckAllPlayersReady(HttpListenerResponse response)
+    public static bool CheckAllPlayersReady(NpgsqlDataSource db, HttpListenerResponse response)
     {
-        await using var cmd = db.CreateCommand(@"
+        using var cmd = db.CreateCommand(@"
         SELECT COUNT(*)
         FROM public.player
         ");
 
-        var reader1 = await cmd.ExecuteReaderAsync();
+        using var reader1 = cmd.ExecuteReader();
 
         int totalPlayers = 0;
-        if (await reader1.ReadAsync())
+        if (reader1.Read())
         {
             totalPlayers = reader1.GetInt32(0);
         }
 
-        await using var cmd1 = db.CreateCommand(@"
+        reader1.Close();
+
+        var cmd1 = db.CreateCommand(@"
         SELECT COUNT(*) 
         FROM public.player 
         WHERE is_ready = true
         ");
 
-        var reader2 = await cmd1.ExecuteReaderAsync();
+        using var reader2 = cmd1.ExecuteReader();
 
         int readyPlayers = 0;
-        if (await reader2.ReadAsync())
+        if (reader2.Read())
         {
             readyPlayers = reader2.GetInt32(0);
         }
         response.StatusCode = (int)HttpStatusCode.OK;
+
+        reader2.Close();
         if (totalPlayers == readyPlayers)
         {
             return true;
@@ -144,6 +144,5 @@ public class Player(NpgsqlDataSource db)
         {
             return false;
         }
-
     }
 }

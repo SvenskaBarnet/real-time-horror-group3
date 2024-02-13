@@ -1,31 +1,27 @@
 ﻿using Npgsql;
-using System.Globalization;
-using System.Linq.Expressions;
-using System.Net;
-using System.Numerics;
-using System.Runtime.Serialization;
 
 namespace real_time_horror_group3;
 
-public class Session(NpgsqlDataSource db)
+public class Session()
 {
-    public async Task Start()
+    public static void Start(NpgsqlDataSource db)
     {
         string message = string.Empty;
-        await using var select = db.CreateCommand(@"
+        var select = db.CreateCommand(@"
                         SELECT COUNT(id)
                         FROM public.session
                         ");
 
-        var reader = await select.ExecuteReaderAsync();
+        using var reader = select.ExecuteReader();
         int count = 1;
-        if (await reader.ReadAsync())
+        if (reader.Read())
         {
             count = reader.GetInt32(0);
         }
+        reader.Close();
         if (count is 0)
         {
-            await using var insert = db.CreateCommand(@"
+            var insert = db.CreateCommand(@"
                             INSERT INTO public.session(
 	                        time)
 	                        VALUES (
@@ -33,34 +29,29 @@ public class Session(NpgsqlDataSource db)
                             UPDATE entry_point
                             SET time = CURRENT_TIMESTAMP;
                             ");
-            await insert.ExecuteNonQueryAsync();
+            insert.ExecuteNonQuery();
         }
     }
 
-
-    public async Task<bool> EntryPointTimer()
+    public static bool EntryPointTimer(NpgsqlDataSource db)
     {
         bool gameOver = false;
-        await using var cmd = db.CreateCommand(@"
+        var cmd = db.CreateCommand(@"
         SELECT to_char(""time"", 'HH24:MI:SS')
         FROM public.entry_point
         WHERE time is not null;
         ");
 
-        var reader = await cmd.ExecuteReaderAsync();
+        using var reader = cmd.ExecuteReader();
         TimeOnly currentTime = TimeOnly.FromDateTime(DateTime.Now);
         String sessionStart = string.Empty;
 
-        while (await reader.ReadAsync())
+        while (reader.Read())
         {
             sessionStart = reader.GetString(0);
-
             var split = sessionStart.Split(":");
 
             TimeOnly startTime = new(int.Parse(split[0]), int.Parse(split[1]), int.Parse(split[2]));
-
-
-
 
             TimeSpan timeElapsed = currentTime - startTime;
             if ((timeElapsed.TotalSeconds > 360)) // 4 minuter tills det blir "game over"
@@ -72,36 +63,34 @@ public class Session(NpgsqlDataSource db)
             {
                 gameOver = false;
             }
-
         }
-
+        reader.Close();
         return gameOver;
     }
-    public async Task<TimeSpan> ElapsedTime()
+    public static TimeSpan ElapsedTime(NpgsqlDataSource db)
     {
-        await using var sessionStart = db.CreateCommand(@"
+        var sessionStart = db.CreateCommand(@"
             SELECT to_char(""time"", 'HH24:MI:SS')
             FROM public.session 
             WHERE time is not null;
             ");
-        var reader = await sessionStart.ExecuteReaderAsync();
+        using var reader = sessionStart.ExecuteReader();
 
         TimeOnly currentTime = TimeOnly.FromDateTime(DateTime.Now);
         TimeOnly startTime = currentTime;
-        while (await reader.ReadAsync())
+        while (reader.Read())
         {
             string[] time = reader.GetString(0).Split(":");
             startTime = new(int.Parse(time[0]), int.Parse(time[1]), int.Parse(time[2]));
         }
 
+        reader.Close();
         TimeSpan interval = currentTime - startTime;
         return interval;
     }
-    public async Task<string> FormattedTime()
+    public static string FormattedTime(NpgsqlDataSource db)
     {
-
-        TimeSpan elapsedTime = await ElapsedTime();
-
+        TimeSpan elapsedTime = ElapsedTime(db);
         return elapsedTime.ToString(@"hh\:mm\:ss");
     }
 }

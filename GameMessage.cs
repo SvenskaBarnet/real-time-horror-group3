@@ -1,12 +1,9 @@
-﻿using Npgsql;
-using System.Diagnostics.CodeAnalysis;
-using System.Net;
-using System.Text;
+﻿using System.Net;
 namespace real_time_horror_group3;
 
 public class GameMessage()
 {
-    public string Help(HttpListenerResponse response)
+    public static string Help(HttpListenerResponse response)
     {
         string message = @"
 List of possible commands and paths:
@@ -40,7 +37,7 @@ curl -X PATCH -d <door name> localhost:3000/<player name>/doors
 
     DateTime then = new(2020, 05, 06);
     DateTime now = DateTime.Now;
-    public string NotFound(HttpListenerResponse response)
+    public static string NotFound(HttpListenerResponse response)
     {
         string message = "Invalid path or command.\nFor list of available commands: curl localhost:3000/help";
         response.StatusCode = (int)HttpStatusCode.NotFound;

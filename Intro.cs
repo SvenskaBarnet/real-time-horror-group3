@@ -1,16 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Reflection.Metadata.Ecma335;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Net;
 
 namespace real_time_horror_group3;
 
 public class Intro
 {
-    public async Task<string> Story(HttpListenerResponse respons)
+    public static string Story(HttpListenerResponse respons)
     {
         string message = @"
 You wake up in your house by the lake, tired and confused about a sound you hear outside. 
