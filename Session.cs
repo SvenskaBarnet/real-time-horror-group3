@@ -54,7 +54,7 @@ public class Session()
             TimeOnly startTime = new(int.Parse(split[0]), int.Parse(split[1]), int.Parse(split[2]));
 
             TimeSpan timeElapsed = currentTime - startTime;
-            if ((timeElapsed.TotalSeconds > 360)) // 4 minuter tills det blir "game over"
+            if ((timeElapsed.TotalSeconds > 240)) // 4 minuter tills det blir "game over"
             {
                 gameOver = true;
                 break;
