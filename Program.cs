@@ -7,7 +7,7 @@ using real_time_horror_group3;
 
 
 string dbUri = "Host=localhost;Port=5455;Username=postgres;Password=postgres;Database=notsohomealone";
-await using var db = NpgsqlDataSource.Create(dbUri);
+using var db = NpgsqlDataSource.Create(dbUri);
 Database database = new(db);
 await database.Create();
 
@@ -17,7 +17,7 @@ string? message = string.Empty;
 
 Console.CancelKeyPress += delegate (object? sender, ConsoleCancelEventArgs e)
 {
-    Console.WriteLine("Interupting cancel event");
+    Console.WriteLine("Interrupting cancel event");
     e.Cancel = true;
     listen = false;
 };
@@ -38,8 +38,7 @@ while (listen)
 listener.Stop();
 Console.WriteLine("Server stopped");
 
-
-async void Router(IAsyncResult result)
+void Router(IAsyncResult result)
 {
     if (result.AsyncState is HttpListener listener)
     {
@@ -54,33 +53,33 @@ async void Router(IAsyncResult result)
         Session session = new(db);
         GameMessage gameMessage = new();
 
-        if (await session.EntryPointTimer() == false)
+        if (session.EntryPointTimer() == false)
         {
             switch (request.Url?.AbsolutePath.ToLower())
             {
                 case (string path) when path == "/new-player":
                     if (request.HttpMethod is "POST")
                     {
-                        message = await player.Create(request, response);
-                    }
-                    break;
-                    
-                case (string path) when path == $"/{await player.Verify(request, response)}/ready":
-                    if (request.HttpMethod == "PATCH")
-                    {
-                        message = await player.Ready(request, response);
+                        message = player.Create(request, response);
                     }
                     break;
 
-                case (string path) when path == $"/{await player.Verify(request, response)}/start":
+                case (string path) when path == $"/{player.Verify(request, response)}/ready":
+                    if (request.HttpMethod == "PATCH")
+                    {
+                        message = player.Ready(request, response);
+                    }
+                    break;
+
+                case (string path) when path == $"/{player.Verify(request, response)}/start":
                     if (request.HttpMethod is "GET")
                     {
-                        bool playersReady = await player.CheckAllPlayersReady(response);
+                        bool playersReady = player.CheckAllPlayersReady(response);
                         if (playersReady)
                         {
                             Intro intro = new Intro();
-                            message = await intro.Story(response);
-                            await session.Start();
+                            message = intro.Story(response);
+                            session.Start();
                             sessionStarted = true;
                         }
                         else
@@ -91,50 +90,12 @@ async void Router(IAsyncResult result)
                     }
                     break;
 
-                case (string path) when path == $"/{await player.Verify(request, response)}/move":
+                case (string path) when path == $"/{player.Verify(request, response)}/move":
                     if (sessionStarted)
                     {
                         if (request.HttpMethod is "PATCH")
                         {
-                            message = await player.Move(request, response);
-                        }
-                    }
-                    else
-                    {
-                        message = "You need to start game to play";
-                        response.StatusCode = (int)HttpStatusCode.OK;
-                    }
-                    break;
-                    
-                case (string path) when path == $"/{await player.Verify(request, response)}/windows":
-                    if (sessionStarted)
-                    {
-                        if (request.HttpMethod is "GET")
-                        {
-                            message = await check.Windows(request, response, player);
-                        }
-                        else if (request.HttpMethod is "PATCH")
-                        {
-                            message = await action.Lock("Window", check, player, request, response);
-                        }
-                    }
-                    else
-                    {
-                        message = "You need to start game to play";
-                        response.StatusCode = (int)HttpStatusCode.OK;
-                    }
-                    break;
-                    
-                case (string path) when path == $"/{await player.Verify(request, response)}/doors":
-                    if (sessionStarted)
-                    {
-                        if (request.HttpMethod is "GET")
-                        {
-                            message = await check.Doors(request, response, player);
-                        }
-                        else if (request.HttpMethod is "PATCH")
-                        {
-                            message = await action.Lock("Door", check, player, request, response);
+                            message = player.Move(request, response);
                         }
                     }
                     else
@@ -144,12 +105,50 @@ async void Router(IAsyncResult result)
                     }
                     break;
 
-                case (string path) when path == $"/{await player.Verify(request, response)}/time":
+                case (string path) when path == $"/{player.Verify(request, response)}/windows":
                     if (sessionStarted)
                     {
                         if (request.HttpMethod is "GET")
                         {
-                            message = await session.FormattedTime();
+                            message = check.Windows(request, response, player);
+                        }
+                        else if (request.HttpMethod is "PATCH")
+                        {
+                            message = action.Lock("Window", check, player, request, response);
+                        }
+                    }
+                    else
+                    {
+                        message = "You need to start game to play";
+                        response.StatusCode = (int)HttpStatusCode.OK;
+                    }
+                    break;
+
+                case (string path) when path == $"/{player.Verify(request, response)}/doors":
+                    if (sessionStarted)
+                    {
+                        if (request.HttpMethod is "GET")
+                        {
+                            message = check.Doors(request, response, player);
+                        }
+                        else if (request.HttpMethod is "PATCH")
+                        {
+                            message = action.Lock("Door", check, player, request, response);
+                        }
+                    }
+                    else
+                    {
+                        message = "You need to start game to play";
+                        response.StatusCode = (int)HttpStatusCode.OK;
+                    }
+                    break;
+
+                case (string path) when path == $"/{player.Verify(request, response)}/time":
+                    if (sessionStarted)
+                    {
+                        if (request.HttpMethod is "GET")
+                        {
+                            message = session.FormattedTime();
                         }
                     }
                     else

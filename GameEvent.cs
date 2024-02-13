@@ -6,13 +6,13 @@ using System.Text;
 namespace real_time_horror_group3; 
 public class GameEvent(NpgsqlDataSource db)
 {
-    public async Task UnlockEntry()
+    public void UnlockEntry()
     {
-        await using var entryCount = db.CreateCommand(@"
+         using var entryCount = db.CreateCommand(@"
             SELECT COUNT(id)
             FROM public.entry_point;
             ");
-        var reader1 = await entryCount.ExecuteReaderAsync();
+        var reader1 =  entryCount.ExecuteReader();
         int totalEntry = 0;
         if (reader1.Read()) 
         {
@@ -22,18 +22,18 @@ public class GameEvent(NpgsqlDataSource db)
         Random random = new Random();
         int randomEntry = random.Next(1, totalEntry);
 
-        await using var lockEntry = db.CreateCommand(@"
+         using var lockEntry = db.CreateCommand(@"
             UPDATE public.entry_point
             SET is_locked = false 
             WHERE id = $1;
             ");
         lockEntry.Parameters.AddWithValue(randomEntry);
-        await lockEntry.ExecuteNonQueryAsync();
+         lockEntry.ExecuteNonQuery();
     }
 
-    public async void RandomTrigger(Session session,GameEvent gameEvent)
+    public void RandomTrigger(Session session,GameEvent gameEvent)
     {
-        TimeSpan timeElapsed = await session.ElapsedTime();
+        TimeSpan timeElapsed =  session.ElapsedTime();
 
         double baseProbability = 0.1;
         double exponentialRate = 0.05;
@@ -46,7 +46,7 @@ public class GameEvent(NpgsqlDataSource db)
 
         if (randomValue <= probability)
         {
-            await gameEvent.UnlockEntry();
+             gameEvent.UnlockEntry();
         }
     }
 }

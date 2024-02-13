@@ -10,7 +10,7 @@ namespace real_time_horror_group3;
 
 public class Intro
 {
-    public async Task<string> Story(HttpListenerResponse respons)
+    public string Story(HttpListenerResponse respons)
     {
         string message = @"
 You wake up in your house by the lake, tired and confused about a sound you hear outside. 
