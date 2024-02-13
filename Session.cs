@@ -12,12 +12,13 @@ public class Session()
                         FROM public.session
                         ");
 
-        var reader = select.ExecuteReader();
+        using var reader = select.ExecuteReader();
         int count = 1;
         if (reader.Read())
         {
             count = reader.GetInt32(0);
         }
+        reader.Close();
         if (count is 0)
         {
             var insert = db.CreateCommand(@"
@@ -29,7 +30,6 @@ public class Session()
                             SET time = CURRENT_TIMESTAMP;
                             ");
             insert.ExecuteNonQuery();
-            insert.Dispose();
         }
     }
 
@@ -42,7 +42,7 @@ public class Session()
         WHERE time is not null;
         ");
 
-        var reader = cmd.ExecuteReader();
+        using var reader = cmd.ExecuteReader();
         TimeOnly currentTime = TimeOnly.FromDateTime(DateTime.Now);
         String sessionStart = string.Empty;
 
@@ -64,6 +64,7 @@ public class Session()
                 gameOver = false;
             }
         }
+        reader.Close();
         return gameOver;
     }
     public static TimeSpan ElapsedTime(NpgsqlDataSource db)
@@ -73,7 +74,7 @@ public class Session()
             FROM public.session 
             WHERE time is not null;
             ");
-        var reader = sessionStart.ExecuteReader();
+        using var reader = sessionStart.ExecuteReader();
 
         TimeOnly currentTime = TimeOnly.FromDateTime(DateTime.Now);
         TimeOnly startTime = currentTime;
@@ -83,6 +84,7 @@ public class Session()
             startTime = new(int.Parse(time[0]), int.Parse(time[1]), int.Parse(time[2]));
         }
 
+        reader.Close();
         TimeSpan interval = currentTime - startTime;
         return interval;
     }

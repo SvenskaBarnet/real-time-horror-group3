@@ -85,13 +85,13 @@ public class Player()
         string? path = request.Url?.AbsolutePath;
         string? name = path?.Split('/')[1];
 
-        using var cmd = db.CreateCommand(@"
+        var cmd = db.CreateCommand(@"
             SELECT (name)
             FROM public.player
             WHERE name = $1
             ");
         cmd.Parameters.AddWithValue(name ?? string.Empty);
-        var reader = cmd.ExecuteReader();
+        using var reader = cmd.ExecuteReader();
 
         string username = string.Empty;
         if (reader.Read())
@@ -99,6 +99,7 @@ public class Player()
             username = reader.GetString(0);
         }
 
+        reader.Close();
         return username;
     }
 
@@ -109,7 +110,7 @@ public class Player()
         FROM public.player
         ");
 
-        var reader1 = cmd.ExecuteReader();
+        using var reader1 = cmd.ExecuteReader();
 
         int totalPlayers = 0;
         if (reader1.Read())
@@ -117,13 +118,15 @@ public class Player()
             totalPlayers = reader1.GetInt32(0);
         }
 
+        reader1.Close();
+
         var cmd1 = db.CreateCommand(@"
         SELECT COUNT(*) 
         FROM public.player 
         WHERE is_ready = true
         ");
 
-        var reader2 = cmd1.ExecuteReader();
+        using var reader2 = cmd1.ExecuteReader();
 
         int readyPlayers = 0;
         if (reader2.Read())
@@ -131,6 +134,8 @@ public class Player()
             readyPlayers = reader2.GetInt32(0);
         }
         response.StatusCode = (int)HttpStatusCode.OK;
+
+        reader2.Close();
         if (totalPlayers == readyPlayers)
         {
             return true;

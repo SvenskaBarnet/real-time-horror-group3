@@ -9,13 +9,14 @@ public class GameEvent()
             SELECT COUNT(id)
             FROM public.entry_point;
             ");
-        var reader1 = entryCount.ExecuteReader();
+        using var reader1 = entryCount.ExecuteReader();
         int totalEntry = 0;
         if (reader1.Read())
         {
             totalEntry = reader1.GetInt32(0);
         }
 
+        reader1.Close();
         Random random = new Random();
         int randomEntry = random.Next(1, totalEntry);
 

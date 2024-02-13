@@ -15,7 +15,7 @@ public class Check()
                         WHERE room_id = $1 AND type = 'Window';
                         ");
         windows.Parameters.AddWithValue(roomId);
-        var reader2 = windows.ExecuteReader();
+        using var reader2 = windows.ExecuteReader();
 
         string message = string.Empty;
         while (reader2.Read())
@@ -33,6 +33,8 @@ public class Check()
 
         GameEvent.RandomTrigger(db);
         response.StatusCode = (int)HttpStatusCode.OK;
+
+        reader2.Close();
         return message;
     }
     public static string Doors(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
@@ -45,7 +47,7 @@ public class Check()
                         WHERE room_id = $1 AND type = 'Door';
                         ");
         windows.Parameters.AddWithValue(roomId);
-        var reader2 = windows.ExecuteReader();
+        using var reader2 = windows.ExecuteReader();
 
         string message = string.Empty;
         while (reader2.Read())
@@ -62,6 +64,7 @@ public class Check()
         }
         GameEvent.RandomTrigger(db);
         response.StatusCode = (int)HttpStatusCode.OK;
+        reader2.Close();
         return message;
     }
 
@@ -75,7 +78,7 @@ public class Check()
             ");
 
         playerPos.Parameters.AddWithValue(playerName ?? string.Empty);
-        var reader1 = playerPos.ExecuteReader();
+        using var reader1 = playerPos.ExecuteReader();
 
         int roomId = 0;
         string roomName = string.Empty;
@@ -90,6 +93,7 @@ public class Check()
 
         string message = $"You are in the {roomName}. \nThere is {doors} door(s) and {windows} window(s).";
 
+        reader1.Close();
         return message;
     }
 
@@ -102,7 +106,7 @@ public class Check()
             ");
         entryPoints.Parameters.AddWithValue(roomId);
         entryPoints.Parameters.AddWithValue(type);
-        var reader2 = entryPoints.ExecuteReader();
+        using var reader2 = entryPoints.ExecuteReader();
 
         int count = 0;
         while (reader2.Read())
@@ -110,6 +114,7 @@ public class Check()
             count = reader2.GetInt32(0);
         }
 
+        reader2.Close();
         return count;
     }
     public static int PlayerPosition(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
@@ -121,7 +126,7 @@ public class Check()
                         ");
         playerPos.Parameters.AddWithValue(Player.Verify(db, request, response));
 
-        var reader = playerPos.ExecuteReader();
+        using var reader = playerPos.ExecuteReader();
         int roomId = 0;
 
         if (reader.Read())
@@ -129,6 +134,7 @@ public class Check()
             roomId = reader.GetInt32(0);
         }
 
+        reader.Close();
         return roomId;
     }
 }
