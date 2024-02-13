@@ -3,6 +3,19 @@
 namespace real_time_horror_group3;
 public class GameEvent()
 {
+    public static void SpawnDangerousObject(NpgsqlDataSource db)
+    {
+        Random random = new();
+        int randomRoom = random.Next(1, 4);
+
+        var spawnObject = db.CreateCommand(@"
+            UPDATE public.room
+            SET has_danger = true
+            WHERE id = $1;
+            ");
+        spawnObject.Parameters.AddWithValue(randomRoom);
+        spawnObject.ExecuteNonQuery();
+    }
     public static void UnlockEntry(NpgsqlDataSource db)
     {
         var entryCount = db.CreateCommand(@"
@@ -22,7 +35,7 @@ public class GameEvent()
 
         var lockEntry = db.CreateCommand(@"
             UPDATE public.entry_point
-            SET is_locked = false 
+            SET is_locked = false, time = CURRENT_TIMESTAMP 
             WHERE id = $1;
             ");
         lockEntry.Parameters.AddWithValue(randomEntry);
@@ -44,7 +57,16 @@ public class GameEvent()
 
         if (randomValue <= probability)
         {
-            GameEvent.UnlockEntry(db);
+            int randomEvent = random.Next(1, 3);
+            switch (randomEvent)
+            {
+                case 1:
+                    GameEvent.UnlockEntry(db);
+                    break;
+                case 2:
+                    GameEvent.SpawnDangerousObject(db);
+                    break;
+            }
         }
     }
 }

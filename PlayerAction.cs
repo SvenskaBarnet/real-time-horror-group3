@@ -13,7 +13,7 @@ public class PlayerAction()
         var cmd = db.CreateCommand(@$"
 
             UPDATE entry_point
-            SET is_locked = true
+            SET is_locked = true, ""time"" = null
             WHERE name = $1 AND room_id = $2 AND type = $3;");
 
         cmd.Parameters.AddWithValue(lockName);
