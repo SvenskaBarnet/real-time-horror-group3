@@ -8,13 +8,13 @@ public class Highscore()
 {
     public static bool HandleGameOver(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
     {
-        string playerName = Player.Verify(db, request, response); // Om alla är döda gameover oavsett namn, Player verify behövs inte
+        string playerName = Player.Verify(db, request, response); 
         var cmd = db.CreateCommand(@"
         SELECT COUNT(*) 
         FROM public.player
         WHERE name = $1 AND is_dead = true;
         ");
-        cmd.Parameters.AddWithValue(playerName);
+        cmd.Parameters.AddWithValue(playerName);  // Om alla är döda gameover oavsett namn, Player verify behövs inte
 
         using var reader = cmd.ExecuteReader();
         int deadPlayer = 0;
