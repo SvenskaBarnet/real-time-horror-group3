@@ -67,7 +67,7 @@ async void Router(IAsyncResult result)
             case (string path) when path == $"/{await player.Verify(request, response)}/windows":
                 if (request.HttpMethod is "GET")
                 {
-                    message = await check.Windows(request, response, player); 
+                    message = await check.Windows(request, response, player);
                 }
                 else if (request.HttpMethod is "PATCH")
                 {
@@ -78,7 +78,7 @@ async void Router(IAsyncResult result)
             case (string path) when path == $"/{await player.Verify(request, response)}/doors":
                 if (request.HttpMethod is "GET")
                 {
-                    message = await check.Doors(request, response, player); 
+                    message = await check.Doors(request, response, player);
                 }
                 else if (request.HttpMethod is "PATCH")
                 {

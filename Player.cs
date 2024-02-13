@@ -1,84 +1,142 @@
 ﻿using Npgsql;
+using System;
+using System.IO;
 using System.Net;
 using System.Text;
-namespace real_time_horror_group3;
+using System.Threading.Tasks;
 
-public class Player(NpgsqlDataSource db)
+namespace real_time_horror_group3
 {
-    Check check = new(db);
-    public async Task<string> Create(HttpListenerRequest request, HttpListenerResponse response)
+    public class Player
     {
-        StreamReader reader = new(request.InputStream, request.ContentEncoding);
-        string name = reader.ReadToEnd();
+        private readonly NpgsqlDataSource db;
+        private readonly Check check;
 
-        await using var cmd = db.CreateCommand(@"
+        public Player(NpgsqlDataSource db)
+        {
+            this.db = db;
+            check = new Check(db);
+        }
+
+        public async Task<string> Create(HttpListenerRequest request, HttpListenerResponse response)
+        {
+            StreamReader reader = new(request.InputStream, request.ContentEncoding);
+            string name = reader.ReadToEnd();
+
+            await using var cmd = db.CreateCommand(@"
                     INSERT INTO public.player
                     (name, location)
                     VALUES($1, 1);
                     ");
-        cmd.Parameters.AddWithValue(name);
-        await cmd.ExecuteNonQueryAsync();
+            cmd.Parameters.AddWithValue(name);
+            await cmd.ExecuteNonQueryAsync();
 
-        string message = $"Player '{name}' has been created.{await check.EntryPoints(request, response, name)}";
-        response.StatusCode = (int)HttpStatusCode.Created;
+            string message = $"Player '{name}' has been created.{await check.EntryPoints(request, response, name)}";
+            response.StatusCode = (int)HttpStatusCode.Created;
 
-        return message;
-    }
-
-    public async Task<string> Move(HttpListenerRequest request, HttpListenerResponse response)
-        
-    {
-        StreamReader reader = new(request.InputStream, request.ContentEncoding);
-        string roomName = reader.ReadToEnd();
-        int room = 0;
-        switch (roomName.ToLower())
-        {
-            case "kitchen":
-                room = 1;
-                break;
-            case "hallway":
-                room = 2;
-                break;
-            case "living room":
-                room = 3;
-                break;
+            return message;
         }
 
-        string playerName = await Verify(request, response);
+        public async Task<string> Move(HttpListenerRequest request, HttpListenerResponse response)
+        {
+            StreamReader reader = new(request.InputStream, request.ContentEncoding);
+            string roomName = reader.ReadToEnd();
+            int room = 0;
+            switch (roomName.ToLower())
+            {
+                case "kitchen":
+                    room = 1;
+                    break;
+                case "hallway":
+                    room = 2;
+                    break;
+                case "living room":
+                    room = 3;
+                    break;
+            }
 
-        await using var cmd = db.CreateCommand(@"
+            string playerName = await Verify(request, response);
+
+            await using var cmd = db.CreateCommand(@"
                         UPDATE public.player
                         SET location = $1
                         WHERE name = $2;
                         ");
-        cmd.Parameters.AddWithValue(room);
-        cmd.Parameters.AddWithValue(playerName);
+            cmd.Parameters.AddWithValue(room);
+            cmd.Parameters.AddWithValue(playerName);
 
-        await cmd.ExecuteNonQueryAsync();
-        response.StatusCode = (int)HttpStatusCode.OK;
-        string message = $"{await check.EntryPoints(request,response, playerName)}";
+            await cmd.ExecuteNonQueryAsync();
+            response.StatusCode = (int)HttpStatusCode.OK;
+            string message = $"{await check.EntryPoints(request, response, playerName)}";
 
-        return message;
-    }
-    public async Task<string> Verify(HttpListenerRequest request, HttpListenerResponse response)
-    {
-        string? path = request.Url?.AbsolutePath;
-        string? name = path?.Split('/')[1];
+            string asciiArt = GetEnhancedAsciiArtForLocation(room);
+            Console.WriteLine(asciiArt);
 
-        await using var cmd = db.CreateCommand(@"
-            SELECT (name)
-            FROM public.player
-            WHERE name = $1
-            ");
-        cmd.Parameters.AddWithValue(name ?? string.Empty);
-        var reader = await cmd.ExecuteReaderAsync();
-
-        string username = string.Empty;
-        if(await reader.ReadAsync())
-        {
-            username = reader.GetString(0);
+            return message;
         }
-        return username;
-    }
 
+        private string GetEnhancedAsciiArtForLocation(int room)
+        {
+            switch (room)
+            {
+                case 1: // Kitchen
+                    return
+                           "-------------------------\n" +
+                           "|  -----  |     |       |\n" +
+                           "|  | K |        |       |\n" +
+                           "|  -----        |       |\n" +
+                           "|         |     |       |\n" +
+                           "|         |     |       |\n" +
+                           "|         |     |       |\n" +
+                           "|         |     |       |\n" +
+                           "-------------------------\n";
+                case 2: // Hallway
+                    return
+                           "-------------------------\n" +
+                           "|         |     |       |\n" +
+                           "|               |       |\n" +
+                           "|         |     |       |\n" +
+                           "|         |  H  |       |\n" +
+                           "|         |     |       |\n" +
+                           "|         |     |       |\n" +
+                           "|         |     |       |\n" +
+                           "-------------------------\n";
+                case 3: // Living Room
+                    return
+                           "-------------------------\n" +
+                           "|         |     |       |\n" +
+                           "|         |     |       |\n" +
+                           "|         |     |       |\n" +
+                           "|         |     |       |\n" +
+                           "|         |       ----- |\n" +
+                           "|         |       | L | |\n" +
+                           "|         |     | ----- |\n" +
+                           "-------------------------\n";
+
+                default:
+                    return "Invalid Room";
+            }
+        }
+
+        public async Task<string> Verify(HttpListenerRequest request, HttpListenerResponse response)
+        {
+            string? path = request.Url?.AbsolutePath;
+            string? name = path?.Split('/')[1];
+
+            await using var cmd = db.CreateCommand(@"
+                SELECT (name)
+                FROM public.player
+                WHERE name = $1
+                ");
+            cmd.Parameters.AddWithValue(name ?? string.Empty);
+            var reader = await cmd.ExecuteReaderAsync();
+
+            string username = string.Empty;
+            if (await reader.ReadAsync())
+            {
+                username = reader.GetString(0);
+            }
+            return username;
+        }
+    }
 }
