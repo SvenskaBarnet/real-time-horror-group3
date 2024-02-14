@@ -77,6 +77,13 @@ public class Player()
 
         cmd.ExecuteNonQuery();
 
+        if (Death(db, playerName))
+        {
+            response.StatusCode = (int)HttpStatusCode.OK;
+            string message1 = "Oh no, you are dead!";
+            return message1;
+        }
+
         GameEvent.RandomTrigger(db);
 
         response.StatusCode = (int)HttpStatusCode.OK;
