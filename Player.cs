@@ -154,17 +154,19 @@ public class Player()
         WHERE IS_DEAD = TRUE;
         ");
 
+
         using var reader = cmd.ExecuteReader();
-        int playerDeath = 0;
+        bool playerDeath = false;
 
-        while (reader.Read())
+
+
+        if (reader.Read())
         {
-            playerDeath = reader.GetInt32(3);
+            playerDeath = reader.GetBoolean(3);
         }
-
         reader.Close();
 
-        if (playerDeath == 0)
+        if (playerDeath == true)
         {
             return true;
         }
