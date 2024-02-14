@@ -10,27 +10,35 @@ public class Highscore()
     {
         //string playerName = Player.Verify(db, request, response); 
         var cmd = db.CreateCommand(@"
-      SELECT COUNT(id) 
+      SELECT COUNT(*) 
       FROM public.player
       WHERE is_dead = true
-
-      UNION ALL
-
-      SELECT COUNT(id) 
-      FROM public.player;
         ");
         //cmd.Parameters.AddWithValue(playerName);  // Om alla är döda gameover oavsett namn, Player verify behövs inte
 
+        var cmd2 = db.CreateCommand(@"
+        SELECT COUNT(*) 
+        FROM public.player;
+        ");
 
 
         using var reader = cmd.ExecuteReader();
         int deadPlayer = 0;
         int totalPlayers = 0;
+
+
         while (reader.Read())
         {
             deadPlayer = reader.GetInt32(0);
-            totalPlayers = reader.GetInt32(1);
+
         }
+
+        using var reader2 = cmd2.ExecuteReader();
+        while (reader2.Read())
+        {
+            totalPlayers = reader.GetInt32(0);
+        }
+
         reader.Close();
 
 

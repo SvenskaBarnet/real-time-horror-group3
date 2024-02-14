@@ -52,7 +52,7 @@ void Router(IAsyncResult result)
 
         response.ContentType = "text/plain";
 
-        if (Session.EntryPointTimer(db) == false || Highscore.HandleGameOver(db, request, response) == false)
+        if (Session.EntryPointTimer(db) == false && Highscore.HandleGameOver(db, request, response) == false)
         {
             switch (request.Url?.AbsolutePath.ToLower())
             {
