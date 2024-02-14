@@ -196,7 +196,6 @@ void Router(IAsyncResult result)
         byte[] buffer = Encoding.UTF8.GetBytes(message);
         response.OutputStream.Write(buffer);
         response.OutputStream.Close();
-        response.Close();
         message = string.Empty;
 
         listener.BeginGetContext(new AsyncCallback(Router), state);
