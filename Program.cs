@@ -192,7 +192,7 @@ void Router(IAsyncResult result)
             }
             else
             {
-                Console.WriteLine("You player has died");
+                message = "You player is dead";
             }
         }
 
