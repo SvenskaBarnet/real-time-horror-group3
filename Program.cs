@@ -56,137 +56,145 @@ void Router(IAsyncResult result)
 
         if (Session.EntryPointTimer(db) == false && Highscore.HandleGameOver(db, request, response) == false)
         {
-  
-            switch (request.Url?.AbsolutePath.ToLower())
+            if (Player.Death(db) == true)
             {
-                case (string path) when path == "/new-player":
-                    if (request.HttpMethod is "POST")
-                    {
 
-                        message = Player.Create(db, request, response);
-                    }
-                    break;
 
-                case (string path) when path == $"/{Player.Verify(db, request, response)}/ready":
-                    if (request.HttpMethod == "PATCH")
-                    {
-                        message = Player.Ready(db, request, response);
-                    }
-                    break;
-
-                case (string path) when path == $"/{Player.Verify(db, request, response)}/start":
-                    if (request.HttpMethod is "GET")
-                    {
-                        bool playersReady = Player.CheckAllPlayersReady(db, response);
-                        if (playersReady)
+                switch (request.Url?.AbsolutePath.ToLower())
+                {
+                    case (string path) when path == "/new-player":
+                        if (request.HttpMethod is "POST")
                         {
-                            Intro intro = new Intro();
-                            message = Intro.Story(response);
-                            Session.Start(db);
-                            sessionStarted = true;
+
+                            message = Player.Create(db, request, response);
+                        }
+                        break;
+
+                    case (string path) when path == $"/{Player.Verify(db, request, response)}/ready":
+                        if (request.HttpMethod == "PATCH")
+                        {
+                            message = Player.Ready(db, request, response);
+                        }
+                        break;
+
+                    case (string path) when path == $"/{Player.Verify(db, request, response)}/start":
+                        if (request.HttpMethod is "GET")
+                        {
+                            bool playersReady = Player.CheckAllPlayersReady(db, response);
+                            if (playersReady)
+                            {
+                                Intro intro = new Intro();
+                                message = Intro.Story(response);
+                                Session.Start(db);
+                                sessionStarted = true;
+                            }
+                            else
+                            {
+                                message = "Not all players are ready. Please wait until all players are ready to start.";
+                                response.StatusCode = (int)HttpStatusCode.OK;
+                            }
+                        }
+                        break;
+
+                    case (string path) when path == $"/{Player.Verify(db, request, response)}/move":
+                        if (sessionStarted)
+                        {
+                            if (request.HttpMethod is "PATCH")
+                            {
+                                message = Player.Move(db, request, response);
+                            }
                         }
                         else
                         {
-                            message = "Not all players are ready. Please wait until all players are ready to start.";
+                            message = "You need to start game to play";
                             response.StatusCode = (int)HttpStatusCode.OK;
                         }
-                    }
-                    break;
+                        break;
 
-                case (string path) when path == $"/{Player.Verify(db, request, response)}/move":
-                    if (sessionStarted)
-                    {
-                        if (request.HttpMethod is "PATCH")
+                    case (string path) when path == $"/{Player.Verify(db, request, response)}/windows":
+                        if (sessionStarted)
                         {
-                            message = Player.Move(db, request, response);
+                            if (request.HttpMethod is "GET")
+                            {
+                                message = Check.Windows(db, request, response);
+                            }
+                            else if (request.HttpMethod is "PATCH")
+                            {
+                                message = PlayerAction.Lock(db, "Window", request, response);
+                            }
                         }
-                    }
-                    else
-                    {
-                        message = "You need to start game to play";
-                        response.StatusCode = (int)HttpStatusCode.OK;
-                    }
-                    break;
+                        else
+                        {
+                            message = "You need to start game to play";
+                            response.StatusCode = (int)HttpStatusCode.OK;
+                        }
+                        break;
 
-                case (string path) when path == $"/{Player.Verify(db, request, response)}/windows":
-                    if (sessionStarted)
-                    {
-                        if (request.HttpMethod is "GET")
+                    case (string path) when path == $"/{Player.Verify(db, request, response)}/doors":
+                        if (sessionStarted)
                         {
-                            message = Check.Windows(db, request, response);
+                            if (request.HttpMethod is "GET")
+                            {
+                                message = Check.Doors(db, request, response);
+                            }
+                            else if (request.HttpMethod is "PATCH")
+                            {
+                                message = PlayerAction.Lock(db, "Door", request, response);
+                            }
                         }
-                        else if (request.HttpMethod is "PATCH")
+                        else
                         {
-                            message = PlayerAction.Lock(db, "Window", request, response);
+                            message = "You need to start game to play";
+                            response.StatusCode = (int)HttpStatusCode.OK;
                         }
-                    }
-                    else
-                    {
-                        message = "You need to start game to play";
-                        response.StatusCode = (int)HttpStatusCode.OK;
-                    }
-                    break;
+                        break;
 
-                case (string path) when path == $"/{Player.Verify(db, request, response)}/doors":
-                    if (sessionStarted)
-                    {
-                        if (request.HttpMethod is "GET")
+                    case (string path) when path == $"/{Player.Verify(db, request, response)}/room":
+                        if (sessionStarted)
                         {
-                            message = Check.Doors(db, request, response);
+                            if (request.HttpMethod is "GET")
+                            {
+                                message = Check.Room(db, request, response);
+                            }
+                            else if (request.HttpMethod is "PATCH")
+                            {
+                                message = PlayerAction.RemoveDanger(db, request, response);
+                            }
                         }
-                        else if (request.HttpMethod is "PATCH")
+                        else
                         {
-                            message = PlayerAction.Lock(db, "Door", request, response);
+                            message = "You need to start game to play";
+                            response.StatusCode = (int)HttpStatusCode.OK;
                         }
-                    }
-                    else
-                    {
-                        message = "You need to start game to play";
-                        response.StatusCode = (int)HttpStatusCode.OK;
-                    }
-                    break;
+                        break;
 
-                case (string path) when path == $"/{Player.Verify(db, request, response)}/room":
-                    if (sessionStarted)
-                    {
-                        if (request.HttpMethod is "GET")
+                    case (string path) when path == $"/{Player.Verify(db, request, response)}/time":
+                        if (sessionStarted)
                         {
-                            message = Check.Room(db, request, response);
+                            if (request.HttpMethod is "GET")
+                            {
+                                message = Session.FormattedTime(db);
+                            }
                         }
-                        else if (request.HttpMethod is "PATCH")
+                        else
                         {
-                            message = PlayerAction.RemoveDanger(db, request, response);
+                            message = "You need to start game to play";
+                            response.StatusCode = (int)HttpStatusCode.OK;
                         }
-                    }
-                    else
-                    {
-                        message = "You need to start game to play";
-                        response.StatusCode = (int)HttpStatusCode.OK;
-                    }
-                    break;
+                        break;
 
-                case (string path) when path == $"/{Player.Verify(db, request, response)}/time":
-                    if (sessionStarted)
-                    {
-                        if (request.HttpMethod is "GET")
-                        {
-                            message = Session.FormattedTime(db);
-                        }
-                    }
-                    else
-                    {
-                        message = "You need to start game to play";
-                        response.StatusCode = (int)HttpStatusCode.OK;
-                    }
-                    break;
+                    case (string path) when path == "/help":
+                        message = GameMessage.Help(response);
+                        break;
 
-                case (string path) when path == "/help":
-                    message = GameMessage.Help(response);
-                    break;
-
-                default:
-                    message = GameMessage.NotFound(response);
-                    break;
+                    default:
+                        message = GameMessage.NotFound(response);
+                        break;
+                }
+            }
+            else
+            {
+                Console.WriteLine("You player has died");
             }
         }
 
