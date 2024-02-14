@@ -57,13 +57,29 @@ public class Highscore()
 
     public static void AddScore(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
     {
-        string playerName = Player.Verify(db, request, response);
-        var time = Session.FormattedTime(db);
+
+        var selectName = db.CreateCommand(@"
+        SELECT name 
+        FROM public.player;
+        ");
+
+        using var reader = selectName.ExecuteReader();
+
+        string playerNames = string.Empty;
+
+        while (reader.Read())
+        {
+            playerNames += $"{reader.GetString(0)}, ";
+        }
+
+        reader.Close();
+
+        string time = Session.FormattedTime(db);
         var highscore = db.CreateCommand(@"
-        INSERT INTO public.highscore(player_name, session_time)
+        INSERT INTO public.highscore(player_names, ""time"")
         VALUES ($1, $2);
     ");
-        highscore.Parameters.AddWithValue(playerName);
+        highscore.Parameters.AddWithValue(playerNames);
         highscore.Parameters.AddWithValue(time);
         highscore.ExecuteNonQuery();
     }

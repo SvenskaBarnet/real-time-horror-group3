@@ -190,6 +190,7 @@ void Router(IAsyncResult result)
         else
         {
             message = "Game over!";
+            Highscore.AddScore(db, request, response);
         }
 
         message = $"\n\n{message}\n\n";
