@@ -12,6 +12,8 @@ using var db = NpgsqlDataSource.Create(dbUri);
 Database database = new(db);
 await database.Create();
 
+
+bool gameOver = false;
 bool listen = true;
 bool sessionStarted = false;
 string? message = string.Empty;
@@ -124,7 +126,7 @@ void Router(IAsyncResult result)
                     }
                     break;
 
-                case (string path) when path == $"/{Player.Verify(db,request, response)}/doors":
+                case (string path) when path == $"/{Player.Verify(db, request, response)}/doors":
                     if (sessionStarted)
                     {
                         if (request.HttpMethod is "GET")
@@ -143,7 +145,7 @@ void Router(IAsyncResult result)
                     }
                     break;
 
-                case (string path) when path == $"/{Player.Verify(db,request, response)}/room":
+                case (string path) when path == $"/{Player.Verify(db, request, response)}/room":
                     if (sessionStarted)
                     {
                         if (request.HttpMethod is "GET")
@@ -189,8 +191,13 @@ void Router(IAsyncResult result)
 
         else
         {
-            message = "Game over!";
-            Highscore.AddScore(db, request, response);
+            if (gameOver == false)
+            {
+                Highscore.AddScore(db, request, response);
+                gameOver = true;
+            }
+            message = Highscore.PrintGameOverScreen(db, request, response);
+
         }
 
         message = $"\n\n{message}\n\n";
