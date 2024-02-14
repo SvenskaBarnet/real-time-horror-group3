@@ -192,7 +192,7 @@ void Router(IAsyncResult result)
             }
             else
             {
-                message = "You player is dead";
+                message = "Your player is dead";
             }
         }
 
