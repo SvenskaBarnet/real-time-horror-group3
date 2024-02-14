@@ -45,6 +45,14 @@ CREATE TABLE IF NOT EXISTS public.session
     PRIMARY KEY (id)
 );
 
+CREATE TABLE IF NOT EXISTS public.highscore
+(
+    id serial,
+    player_names text NOT NULL,
+    ""time"" text NOT NULL,
+    PRIMARY KEY (id)
+);
+
 ALTER TABLE IF EXISTS public.entry_point
     ADD CONSTRAINT room_id FOREIGN KEY (room_id)
     REFERENCES public.room (id);

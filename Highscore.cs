@@ -42,8 +42,6 @@ public class Highscore()
         reader.Close();
         reader2.Close();
 
-
-        Console.WriteLine(deadPlayer + " " + totalPlayers);
         response.StatusCode = (int)HttpStatusCode.OK;
         if (deadPlayer == totalPlayers && totalPlayers != 0)
         {
@@ -57,15 +55,54 @@ public class Highscore()
 
     public static void AddScore(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
     {
-        string playerName = Player.Verify(db, request, response);
-        var time = Session.FormattedTime(db);
+
+        var selectName = db.CreateCommand(@"
+        SELECT name 
+        FROM public.player;
+        ");
+
+        using var reader = selectName.ExecuteReader();
+
+        string playerNames = string.Empty;
+
+        while (reader.Read())
+        {
+            playerNames += $"{reader.GetString(0)}, ";
+        }
+        playerNames = playerNames.Substring(0, playerNames.Length - 2);
+        reader.Close();
+
+        string time = Session.FormattedTime(db);
         var highscore = db.CreateCommand(@"
-        INSERT INTO public.highscore(player_name, session_time)
+        INSERT INTO public.highscore(player_names, ""time"")
         VALUES ($1, $2);
     ");
-        highscore.Parameters.AddWithValue(playerName);
+        highscore.Parameters.AddWithValue(playerNames);
         highscore.Parameters.AddWithValue(time);
         highscore.ExecuteNonQuery();
+    }
+
+    public static string PrintGameOverScreen(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
+    {
+
+        var selectHighscore = db.CreateCommand(@"
+      SELECT * FROM public.highscore
+           ORDER BY ""time"" DESC 
+           LIMIT 10;        
+");
+
+
+        string message = "GAMEOVER\n\nhighscore: \n";
+
+        using var reader = selectHighscore.ExecuteReader();
+        while (reader.Read())
+        {
+            message += $"{reader.GetString(1)} - {reader.GetString(2)}\n";
+        }
+
+
+        return message;
+
     }
 
 }
