@@ -7,6 +7,7 @@ public class Check()
 {
     public static string Room(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
     {
+        GameEvent.RandomTrigger(db);
         string? message = string.Empty;
 
         int roomId = PlayerPosition(db, request, response);
@@ -32,7 +33,6 @@ public class Check()
         }
         reader.Close();
         response.StatusCode = (int)HttpStatusCode.OK;
-        GameEvent.RandomTrigger(db);
         return message;
     }
     public static string Windows(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)

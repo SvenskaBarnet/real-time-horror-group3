@@ -27,4 +27,19 @@ public class PlayerAction()
 
         return message;
     }
+
+    public static string RemoveDanger(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
+    {
+        int roomId = Check.PlayerPosition(db, request, response);
+
+        NpgsqlCommand removeDanger = db.CreateCommand(@"
+            UPDATE public.room
+            SET has_danger = false
+            WHERE id = $1;
+            ");
+        removeDanger.Parameters.AddWithValue(roomId);
+
+        string message = "You cleared the room of dangerous objects, it's safe now.";
+        return message;
+    }
 }

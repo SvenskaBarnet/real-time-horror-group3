@@ -152,6 +152,7 @@ void Router(IAsyncResult result)
                         }
                         else if (request.HttpMethod is "PATCH")
                         {
+                            message = PlayerAction.RemoveDanger(db, request, response);
                         }
                     }
                     else
