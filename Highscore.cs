@@ -27,21 +27,23 @@ public class Highscore()
         int totalPlayers = 0;
 
 
-        while (reader.Read())
+        if (reader.Read())
         {
             deadPlayer = reader.GetInt32(0);
 
         }
 
         using var reader2 = cmd2.ExecuteReader();
-        while (reader2.Read())
+        if (reader2.Read())
         {
-            totalPlayers = reader.GetInt32(0);
+            totalPlayers = reader2.GetInt32(0);
         }
 
         reader.Close();
+        reader2.Close();
 
 
+        Console.WriteLine(deadPlayer + " " + totalPlayers);
         response.StatusCode = (int)HttpStatusCode.OK;
         if (deadPlayer == totalPlayers && totalPlayers != 0)
         {
