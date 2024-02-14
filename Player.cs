@@ -145,4 +145,26 @@ public class Player()
             return false;
         }
     }
+
+    public static bool Death(NpgsqlDataSource db, string playerName)
+    {
+        var cmd = db.CreateCommand(@"
+        SELECT is_dead
+        FROM public.player
+        WHERE name = $1;
+        ");
+        cmd.Parameters.AddWithValue(playerName);
+
+        using var reader = cmd.ExecuteReader();
+        bool playerDeath = false;
+
+        if (reader.Read())
+        {
+            playerDeath = reader.GetBoolean(0);
+        }
+        reader.Close();
+        return playerDeath;
+
+       
+    }
 }
