@@ -8,7 +8,7 @@ public class Highscore()
 {
     public static bool HandleGameOver(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
     {
-        var cmd = db.CreateCommand(@"
+      var cmd = db.CreateCommand(@"
       SELECT COUNT(*) 
       FROM public.player
       WHERE is_dead = true
