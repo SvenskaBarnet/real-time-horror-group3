@@ -102,31 +102,5 @@ public class Highscore()
 
     }
 
-    public static bool Death(NpgsqlDataSource db)
-    {
-        var cmd = db.CreateCommand(@"
-        SELECT *
-        FROM PUBLIC.PLAYER
-        WHERE IS_DEAD = TRUE;
-        ");
-
-        using var reader = cmd.ExecuteReader();
-        int playerDeath = 0;
-
-        while (reader.Read())
-        {
-            playerDeath = reader.GetInt32(3);
-        }
-
-        reader.Close();
-
-        if (playerDeath == 0)
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
+  
 }

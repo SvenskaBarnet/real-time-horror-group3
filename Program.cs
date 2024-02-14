@@ -56,6 +56,7 @@ void Router(IAsyncResult result)
 
         if (Session.EntryPointTimer(db) == false && Highscore.HandleGameOver(db, request, response) == false)
         {
+  
             switch (request.Url?.AbsolutePath.ToLower())
             {
                 case (string path) when path == "/new-player":
