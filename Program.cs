@@ -52,7 +52,7 @@ void Router(IAsyncResult result)
 
         response.ContentType = "text/plain";
 
-        if (Session.EntryPointTimer(db) == false)
+        if (Session.EntryPointTimer(db) == false && Highscore.HandleGameOver(db, request, response) == false)
         {
             switch (request.Url?.AbsolutePath.ToLower())
             {
@@ -196,6 +196,7 @@ void Router(IAsyncResult result)
         byte[] buffer = Encoding.UTF8.GetBytes(message);
         response.OutputStream.Write(buffer);
         response.OutputStream.Close();
+        response.Close();
         message = string.Empty;
 
         listener.BeginGetContext(new AsyncCallback(Router), state);
