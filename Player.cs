@@ -67,22 +67,13 @@ public class Player()
 
         var cmd = db.CreateCommand(@"
                         UPDATE public.player
-                        SET location = $1,
-                        is_dead = $2
-                        WHERE name = $3;
+                        SET location = $1
+                        WHERE name = $2;
                         ");
         cmd.Parameters.AddWithValue(room);
-        cmd.Parameters.AddWithValue(hasDanger);
         cmd.Parameters.AddWithValue(playerName);
 
         cmd.ExecuteNonQuery();
-
-        if (Death(db, playerName))
-        {
-            response.StatusCode = (int)HttpStatusCode.OK;
-            string message1 = "Oh no, you are dead!";
-            return message1;
-        }
 
         GameEvent.RandomTrigger(db);
 
