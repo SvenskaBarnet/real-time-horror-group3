@@ -63,7 +63,7 @@ public class Player()
                 break;
         }
 
-        try
+        if (roomId != 0)
         {
             string playerName = Verify(db, request);
 
@@ -94,7 +94,7 @@ public class Player()
                 return message;
             }
         }
-        catch
+        else
         {
             response.StatusCode = (int)HttpStatusCode.BadRequest;
             message = "Invalid room name";
