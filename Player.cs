@@ -49,6 +49,7 @@ public class Player()
         StreamReader reader = new(request.InputStream, request.ContentEncoding);
         string roomName = reader.ReadToEnd();
         int roomId = 0;
+
         switch (roomName.ToLower())
         {
             case "kitchen":
@@ -62,7 +63,7 @@ public class Player()
                 break;
         }
 
-        if (roomId != 0)
+        try
         {
             string playerName = Verify(db, request, response);
 
@@ -82,24 +83,23 @@ public class Player()
 
             if (hasDanger)
             {
-            response.StatusCode = (int)HttpStatusCode.OK;
+                response.StatusCode = (int)HttpStatusCode.OK;
                 message = "You forgot to check for dangers, you are now dead!";
                 return message;
             }
             else
             {
-            response.StatusCode = (int)HttpStatusCode.OK;
+                response.StatusCode = (int)HttpStatusCode.OK;
                 message = $"{Check.EntryPoints(db, request, response, playerName)}";
                 return message;
             }
         }
-        else
+        catch
         {
             response.StatusCode = (int)HttpStatusCode.BadRequest;
             message = "Invalid room name";
             return message;
         }
-
     }
 
     public static bool RoomHasDanger(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
@@ -109,7 +109,7 @@ public class Player()
         FROM public.room
         WHERE id = $1;
     ");
-        cmd.Parameters.AddWithValue(Check.PlayerPosition(db,request, response));
+        cmd.Parameters.AddWithValue(Check.PlayerPosition(db, request, response));
 
         using var reader = cmd.ExecuteReader();
 
@@ -132,8 +132,6 @@ public class Player()
         }
         return hasDanger;
     }
-
-
 
     public static string Verify(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
     {
