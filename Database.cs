@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS public.entry_point
 CREATE TABLE IF NOT EXISTS public.player
 (
     id serial,
-    name text NOT NULL,
+    name text NOT NULL UNIQUE,
     location integer NOT NULL,
     is_dead boolean NOT NULL DEFAULT false,
     is_ready boolean NOT NULL DEFAULT false,
