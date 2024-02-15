@@ -56,7 +56,7 @@ void Router(IAsyncResult result)
 
         if (Session.EntryPointTimer(db) == false && Highscore.HandleGameOver(db, request, response) == false)
         {
-            if (Player.Death(db) == false)
+            if (Player.Death(db, Player.Verify(db,request,response)) == false)
             {
                 switch (request.Url?.AbsolutePath.ToLower())
                 {

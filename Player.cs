@@ -184,32 +184,11 @@ public class Player()
     public static bool Death(NpgsqlDataSource db, string playerName)
     {
         var cmd = db.CreateCommand(@"
-        SELECT is_dead
+        SELECT name, is_dead
         FROM public.player
-        WHERE name = $1;
+        WHERE name = $1 AND is_dead = true;
         ");
         cmd.Parameters.AddWithValue(playerName);
-
-        using var reader = cmd.ExecuteReader();
-        bool playerDeath = false;
-
-        if (reader.Read())
-        {
-            playerDeath = reader.GetBoolean(0);
-        }
-        reader.Close();
-        return playerDeath;
-
-       
-    }
-
-    public static bool Death(NpgsqlDataSource db)
-    {
-        var cmd = db.CreateCommand(@"
-        SELECT name, is_dead
-        FROM PUBLIC.PLAYER
-        WHERE IS_DEAD = TRUE;
-        ");
 
         using var reader = cmd.ExecuteReader();
         bool playerDeath = false;
@@ -219,14 +198,6 @@ public class Player()
             playerDeath = reader.GetBoolean(1);
         }
         reader.Close();
-
-        if (playerDeath == true)
-        {
-            return false;
-        }
-        else
-        {
-            return true;
-        }
+        return playerDeath;
     }
 }
