@@ -7,25 +7,36 @@ public class PlayerAction()
 {
     public static string Lock(NpgsqlDataSource db, string type, HttpListenerRequest request, HttpListenerResponse response)
     {
-        StreamReader reader = new(request.InputStream, request.ContentEncoding);
-        string lockName = reader.ReadToEnd();
+        string message = string.Empty;
+        bool hasDanger = Player.RoomHasDanger(db, request, response);
+        if (!hasDanger)
+        {
+            StreamReader reader = new(request.InputStream, request.ContentEncoding);
+            string lockName = reader.ReadToEnd();
 
-        var cmd = db.CreateCommand(@$"
+            var cmd = db.CreateCommand(@$"
 
             UPDATE entry_point
             SET is_locked = true, ""time"" = null
             WHERE name = $1 AND room_id = $2 AND type = $3;");
 
-        cmd.Parameters.AddWithValue(lockName);
-        cmd.Parameters.AddWithValue(Check.PlayerPosition(db, request, response));
-        cmd.Parameters.AddWithValue(type);
+            cmd.Parameters.AddWithValue(lockName);
+            cmd.Parameters.AddWithValue(Check.PlayerPosition(db, request, response));
+            cmd.Parameters.AddWithValue(type);
+            cmd.ExecuteNonQuery();
 
-        cmd.ExecuteNonQuery();
-        string message = $"{type} {lockName} is now locked";
-
-        GameEvent.RandomTrigger(db);
-
-        return message;
+            message = $"{type} {lockName} is now locked";
+            response.StatusCode = (int)HttpStatusCode.OK;
+            GameEvent.RandomTrigger(db);
+            return message;
+        }
+        else
+        {
+            GameEvent.RandomTrigger(db);
+            response.StatusCode = (int)HttpStatusCode.OK;
+            message = "You forgot to clear the room of dangers and you are now dead.";
+            return message;
+        }
     }
 
     public static string RemoveDanger(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)

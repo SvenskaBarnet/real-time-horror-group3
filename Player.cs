@@ -63,7 +63,7 @@ public class Player()
 
         string playerName = Verify(db, request, response);
 
-        bool hasDanger = Player.RoomHasDanger(db, room);
+        bool hasDanger = Player.RoomHasDanger(db, request, response);
 
         var cmd = db.CreateCommand(@"
                         UPDATE public.player
@@ -78,19 +78,27 @@ public class Player()
         GameEvent.RandomTrigger(db);
 
         response.StatusCode = (int)HttpStatusCode.OK;
-        string message = $"{Check.EntryPoints(db, request, response, playerName)}";
+        if (hasDanger)
+        {
+            string message = "You forgot to check for dangers, you are now dead!";
+            return message;
+        }
+        else
+        {
+            string message = $"{Check.EntryPoints(db, request, response, playerName)}";
+            return message;
+        }
 
-        return message;
     }
 
-    public static bool RoomHasDanger(NpgsqlDataSource db, int roomId)
+    public static bool RoomHasDanger(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
     {
         var cmd = db.CreateCommand(@"
         SELECT has_danger
         FROM public.room
         WHERE id = $1;
     ");
-        cmd.Parameters.AddWithValue(roomId);
+        cmd.Parameters.AddWithValue(Check.PlayerPosition(db,request, response));
 
         using var reader = cmd.ExecuteReader();
 
@@ -99,8 +107,18 @@ public class Player()
         {
             hasDanger = reader.GetBoolean(0);
         }
-
         reader.Close();
+
+        if (hasDanger)
+        {
+            var killPlayer = db.CreateCommand(@"
+                UPDATE public.player
+                SET is_dead = true
+                WHERE name = $1
+                ");
+            killPlayer.Parameters.AddWithValue(Player.Verify(db, request, response));
+            killPlayer.ExecuteNonQuery();
+        }
         return hasDanger;
     }
 
