@@ -177,7 +177,7 @@ public class Check()
                         FROM public.player
                         WHERE name = $1
                         ");
-        playerPos.Parameters.AddWithValue(Player.Verify(db, request, response));
+        playerPos.Parameters.AddWithValue(Player.Verify(db, request));
 
         using var reader = playerPos.ExecuteReader();
         int roomId = 0;

@@ -25,7 +25,7 @@ public class Player()
 
     public static string Ready(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
     {
-        string playerName = Verify(db, request, response);
+        string playerName = Verify(db, request);
 
         var cmd = db.CreateCommand(@"
         UPDATE public.player
@@ -45,50 +45,61 @@ public class Player()
     public static string Move(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
 
     {
+        string message = string.Empty;
         StreamReader reader = new(request.InputStream, request.ContentEncoding);
         string roomName = reader.ReadToEnd();
-        int room = 0;
+        int roomId = 0;
+
         switch (roomName.ToLower())
         {
             case "kitchen":
-                room = 1;
+                roomId = 1;
                 break;
             case "hallway":
-                room = 2;
+                roomId = 2;
                 break;
             case "living room":
-                room = 3;
+                roomId = 3;
                 break;
         }
 
-        string playerName = Verify(db, request, response);
+        try
+        {
+            string playerName = Verify(db, request);
 
-        bool hasDanger = Player.RoomHasDanger(db, request, response);
+            bool hasDanger = Player.RoomHasDanger(db, request, response);
 
-        var cmd = db.CreateCommand(@"
+            var cmd = db.CreateCommand(@"
                         UPDATE public.player
                         SET location = $1
                         WHERE name = $2;
                         ");
-        cmd.Parameters.AddWithValue(room);
-        cmd.Parameters.AddWithValue(playerName);
+            cmd.Parameters.AddWithValue(roomId);
+            cmd.Parameters.AddWithValue(playerName);
 
-        cmd.ExecuteNonQuery();
+            cmd.ExecuteNonQuery();
 
-        GameEvent.RandomTrigger(db);
+            GameEvent.RandomTrigger(db);
 
-        response.StatusCode = (int)HttpStatusCode.OK;
-        if (hasDanger)
+            if (hasDanger)
+            {
+                response.StatusCode = (int)HttpStatusCode.OK;
+                message = "You forgot to check for dangers, you are now dead!";
+                return message;
+            }
+            else
+            {
+                response.StatusCode = (int)HttpStatusCode.OK;
+                message = $"{Check.EntryPoints(db, request, response, playerName)}";
+                return message;
+            }
+        }
+        catch
         {
-            string message = "You forgot to check for dangers, you are now dead!";
+            response.StatusCode = (int)HttpStatusCode.BadRequest;
+            message = "Invalid room name";
             return message;
         }
-        else
-        {
-            string message = $"{Check.EntryPoints(db, request, response, playerName)}";
-            return message;
-        }
-
     }
 
     public static bool RoomHasDanger(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
@@ -98,7 +109,7 @@ public class Player()
         FROM public.room
         WHERE id = $1;
     ");
-        cmd.Parameters.AddWithValue(Check.PlayerPosition(db,request, response));
+        cmd.Parameters.AddWithValue(Check.PlayerPosition(db, request, response));
 
         using var reader = cmd.ExecuteReader();
 
@@ -116,18 +127,17 @@ public class Player()
                 SET is_dead = true
                 WHERE name = $1
                 ");
-            killPlayer.Parameters.AddWithValue(Player.Verify(db, request, response));
+            killPlayer.Parameters.AddWithValue(Player.Verify(db, request));
             killPlayer.ExecuteNonQuery();
         }
         return hasDanger;
     }
 
-
-
-    public static string Verify(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
+    public static string Verify(NpgsqlDataSource db, HttpListenerRequest request)
     {
         string? path = request.Url?.AbsolutePath;
-        string? name = path?.Split('/')[1];
+        string? name = path?.Split('/')[1] ?? string.Empty;
+        string username = string.Empty;
 
         var cmd = db.CreateCommand(@"
             SELECT (name)
@@ -137,7 +147,6 @@ public class Player()
         cmd.Parameters.AddWithValue(name ?? string.Empty);
         using var reader = cmd.ExecuteReader();
 
-        string username = string.Empty;
         if (reader.Read())
         {
             username = reader.GetString(0);
