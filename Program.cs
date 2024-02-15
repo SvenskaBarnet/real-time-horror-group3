@@ -56,7 +56,7 @@ void Router(IAsyncResult result)
 
         if (Session.EntryPointTimer(db) == false && Highscore.HandleGameOver(db, request, response) == false)
         {
-            if (Player.Death(db, Player.Verify(db,request,response)) == false)
+            if (Player.Death(db, Player.Verify(db,request)) == false)
             {
                 switch (request.Url?.AbsolutePath.ToLower())
                 {
@@ -68,14 +68,14 @@ void Router(IAsyncResult result)
                         }
                         break;
 
-                    case (string path) when path == $"/{Player.Verify(db, request, response)}/ready":
+                    case (string path) when path == $"/{Player.Verify(db, request)}/ready" && path != $"//ready":
                         if (request.HttpMethod == "PATCH")
                         {
                             message = Player.Ready(db, request, response);
                         }
                         break;
 
-                    case (string path) when path == $"/{Player.Verify(db, request, response)}/start":
+                    case (string path) when path == $"/{Player.Verify(db, request)}/start" && path != $"//start":
                         if (request.HttpMethod is "GET")
                         {
                             bool playersReady = Player.CheckAllPlayersReady(db, response);
@@ -94,7 +94,7 @@ void Router(IAsyncResult result)
                         }
                         break;
 
-                    case (string path) when path == $"/{Player.Verify(db, request, response)}/move":
+                    case (string path) when path == $"/{Player.Verify(db, request)}/move" && path != $"//move":
                         if (sessionStarted)
                         {
                             if (request.HttpMethod is "PATCH")
@@ -109,7 +109,7 @@ void Router(IAsyncResult result)
                         }
                         break;
 
-                    case (string path) when path == $"/{Player.Verify(db, request, response)}/windows":
+                    case (string path) when path == $"/{Player.Verify(db, request)}/windows" && path != $"//windows":
                         if (sessionStarted)
                         {
                             if (request.HttpMethod is "GET")
@@ -128,7 +128,7 @@ void Router(IAsyncResult result)
                         }
                         break;
 
-                    case (string path) when path == $"/{Player.Verify(db, request, response)}/doors":
+                    case (string path) when path == $"/{Player.Verify(db, request)}/doors" && path != $"//doors":
                         if (sessionStarted)
                         {
                             if (request.HttpMethod is "GET")
@@ -147,7 +147,7 @@ void Router(IAsyncResult result)
                         }
                         break;
 
-                    case (string path) when path == $"/{Player.Verify(db, request, response)}/room":
+                    case (string path) when path == $"/{Player.Verify(db, request)}/room" && path != $"//room":
                         if (sessionStarted)
                         {
                             if (request.HttpMethod is "GET")
@@ -166,7 +166,7 @@ void Router(IAsyncResult result)
                         }
                         break;
 
-                    case (string path) when path == $"/{Player.Verify(db, request, response)}/time":
+                    case (string path) when path == $"/{Player.Verify(db, request)}/time" && path != $"//time":
                         if (sessionStarted)
                         {
                             if (request.HttpMethod is "GET")

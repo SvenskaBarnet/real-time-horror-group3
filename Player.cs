@@ -25,7 +25,7 @@ public class Player()
 
     public static string Ready(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
     {
-        string playerName = Verify(db, request, response);
+        string playerName = Verify(db, request);
 
         var cmd = db.CreateCommand(@"
         UPDATE public.player
@@ -65,7 +65,7 @@ public class Player()
 
         try
         {
-            string playerName = Verify(db, request, response);
+            string playerName = Verify(db, request);
 
             bool hasDanger = Player.RoomHasDanger(db, request, response);
 
@@ -127,16 +127,17 @@ public class Player()
                 SET is_dead = true
                 WHERE name = $1
                 ");
-            killPlayer.Parameters.AddWithValue(Player.Verify(db, request, response));
+            killPlayer.Parameters.AddWithValue(Player.Verify(db, request));
             killPlayer.ExecuteNonQuery();
         }
         return hasDanger;
     }
 
-    public static string Verify(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
+    public static string Verify(NpgsqlDataSource db, HttpListenerRequest request)
     {
         string? path = request.Url?.AbsolutePath;
-        string? name = path?.Split('/')[1];
+        string? name = path?.Split('/')[1] ?? string.Empty;
+        string username = string.Empty;
 
         var cmd = db.CreateCommand(@"
             SELECT (name)
@@ -146,7 +147,6 @@ public class Player()
         cmd.Parameters.AddWithValue(name ?? string.Empty);
         using var reader = cmd.ExecuteReader();
 
-        string username = string.Empty;
         if (reader.Read())
         {
             username = reader.GetString(0);
