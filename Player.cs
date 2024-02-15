@@ -25,7 +25,7 @@ public class Player()
 
     public static string Ready(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
     {
-        string playerName = Verify(db, request, response);
+        string playerName = Verify(db, request);
 
         var cmd = db.CreateCommand(@"
         UPDATE public.player
@@ -61,7 +61,7 @@ public class Player()
                 break;
         }
 
-        string playerName = Verify(db, request, response);
+        string playerName = Verify(db, request);
 
         bool hasDanger = Player.RoomHasDanger(db, request, response);
 
@@ -98,7 +98,7 @@ public class Player()
         FROM public.room
         WHERE id = $1;
     ");
-        cmd.Parameters.AddWithValue(Check.PlayerPosition(db,request, response));
+        cmd.Parameters.AddWithValue(Check.PlayerPosition(db, request, response));
 
         using var reader = cmd.ExecuteReader();
 
@@ -116,7 +116,7 @@ public class Player()
                 SET is_dead = true
                 WHERE name = $1
                 ");
-            killPlayer.Parameters.AddWithValue(Player.Verify(db, request, response));
+            killPlayer.Parameters.AddWithValue(Player.Verify(db, request));
             killPlayer.ExecuteNonQuery();
         }
         return hasDanger;
@@ -124,27 +124,27 @@ public class Player()
 
 
 
-    public static string Verify(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
+    public static string Verify(NpgsqlDataSource db, HttpListenerRequest request)
     {
         string? path = request.Url?.AbsolutePath;
-        string? name = path?.Split('/')[1];
+        string? name = path?.Split('/')[1] ?? string.Empty;
+        string username = string.Empty;
 
-        var cmd = db.CreateCommand(@"
+            var cmd = db.CreateCommand(@"
             SELECT (name)
             FROM public.player
             WHERE name = $1
             ");
-        cmd.Parameters.AddWithValue(name ?? string.Empty);
-        using var reader = cmd.ExecuteReader();
+            cmd.Parameters.AddWithValue(name ?? string.Empty);
+            using var reader = cmd.ExecuteReader();
 
-        string username = string.Empty;
-        if (reader.Read())
-        {
-            username = reader.GetString(0);
-        }
+            if (reader.Read())
+            {
+                username = reader.GetString(0);
+            }
 
-        reader.Close();
-        return username;
+            reader.Close();
+            return username;
     }
 
     public static bool CheckAllPlayersReady(NpgsqlDataSource db, HttpListenerResponse response)
