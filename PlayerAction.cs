@@ -38,6 +38,7 @@ public class PlayerAction()
             WHERE id = $1;
             ");
         removeDanger.Parameters.AddWithValue(roomId);
+        removeDanger.ExecuteNonQuery();
 
         string message = "You cleared the room of dangerous objects, it's safe now.";
         return message;
