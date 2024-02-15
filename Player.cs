@@ -45,47 +45,58 @@ public class Player()
     public static string Move(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
 
     {
+        string message = string.Empty;
         StreamReader reader = new(request.InputStream, request.ContentEncoding);
         string roomName = reader.ReadToEnd();
-        int room = 0;
+        int roomId = 0;
         switch (roomName.ToLower())
         {
             case "kitchen":
-                room = 1;
+                roomId = 1;
                 break;
             case "hallway":
-                room = 2;
+                roomId = 2;
                 break;
             case "living room":
-                room = 3;
+                roomId = 3;
                 break;
         }
 
-        string playerName = Verify(db, request, response);
+        if (roomId != 0)
+        {
+            string playerName = Verify(db, request, response);
 
-        bool hasDanger = Player.RoomHasDanger(db, request, response);
+            bool hasDanger = Player.RoomHasDanger(db, request, response);
 
-        var cmd = db.CreateCommand(@"
+            var cmd = db.CreateCommand(@"
                         UPDATE public.player
                         SET location = $1
                         WHERE name = $2;
                         ");
-        cmd.Parameters.AddWithValue(room);
-        cmd.Parameters.AddWithValue(playerName);
+            cmd.Parameters.AddWithValue(roomId);
+            cmd.Parameters.AddWithValue(playerName);
 
-        cmd.ExecuteNonQuery();
+            cmd.ExecuteNonQuery();
 
-        GameEvent.RandomTrigger(db);
+            GameEvent.RandomTrigger(db);
 
-        response.StatusCode = (int)HttpStatusCode.OK;
-        if (hasDanger)
-        {
-            string message = "You forgot to check for dangers, you are now dead!";
-            return message;
+            if (hasDanger)
+            {
+            response.StatusCode = (int)HttpStatusCode.OK;
+                message = "You forgot to check for dangers, you are now dead!";
+                return message;
+            }
+            else
+            {
+            response.StatusCode = (int)HttpStatusCode.OK;
+                message = $"{Check.EntryPoints(db, request, response, playerName)}";
+                return message;
+            }
         }
         else
         {
-            string message = $"{Check.EntryPoints(db, request, response, playerName)}";
+            response.StatusCode = (int)HttpStatusCode.BadRequest;
+            message = "Invalid room name";
             return message;
         }
 
