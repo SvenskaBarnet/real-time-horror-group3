@@ -11,6 +11,9 @@ List of possible commands and paths:
 Create player: 
 curl -d <player name> localhost:3000/new-player
 
+Ready:
+curl -X PATCH localhost:3000/jimmy/ready
+
 Start game: 
 curl localhost:3000/<player name>/start
 
@@ -23,11 +26,17 @@ curl localhost:3000/<player name>/windows
 Check door status: 
 curl localhost:3000/<player name>/doors
 
+Check room for danger:
+curl localhost3000/<player name>/room
+
 Lock window: 
 curl -X PATCH -d <window name> localhost:3000/<player name>/windows
 
 Lock door: 
 curl -X PATCH -d <door name> localhost:3000/<player name>/doors
+
+Remove danger:
+curl -X PATCH localhost:3000/<player name>/room
 "; 
 
 
