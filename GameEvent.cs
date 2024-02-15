@@ -36,7 +36,7 @@ public class GameEvent()
         var lockEntry = db.CreateCommand(@"
             UPDATE public.entry_point
             SET is_locked = false, time = CURRENT_TIMESTAMP 
-            WHERE id = $1;
+            WHERE id = $1 AND is_locked = true;
             ");
         lockEntry.Parameters.AddWithValue(randomEntry);
         lockEntry.ExecuteNonQuery();
