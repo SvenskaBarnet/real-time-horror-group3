@@ -63,6 +63,8 @@ public class Player()
 
         string playerName = Verify(db, request, response);
 
+        bool hasDanger = Player.RoomHasDanger(db, request, response);
+
         var cmd = db.CreateCommand(@"
                         UPDATE public.player
                         SET location = $1
@@ -76,10 +78,52 @@ public class Player()
         GameEvent.RandomTrigger(db);
 
         response.StatusCode = (int)HttpStatusCode.OK;
-        string message = $"{Check.EntryPoints(db, request, response, playerName)}";
+        if (hasDanger)
+        {
+            string message = "You forgot to check for dangers, you are now dead!";
+            return message;
+        }
+        else
+        {
+            string message = $"{Check.EntryPoints(db, request, response, playerName)}";
+            return message;
+        }
 
-        return message;
     }
+
+    public static bool RoomHasDanger(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
+    {
+        var cmd = db.CreateCommand(@"
+        SELECT has_danger
+        FROM public.room
+        WHERE id = $1;
+    ");
+        cmd.Parameters.AddWithValue(Check.PlayerPosition(db,request, response));
+
+        using var reader = cmd.ExecuteReader();
+
+        bool hasDanger = false;
+        if (reader.Read())
+        {
+            hasDanger = reader.GetBoolean(0);
+        }
+        reader.Close();
+
+        if (hasDanger)
+        {
+            var killPlayer = db.CreateCommand(@"
+                UPDATE public.player
+                SET is_dead = true
+                WHERE name = $1
+                ");
+            killPlayer.Parameters.AddWithValue(Player.Verify(db, request, response));
+            killPlayer.ExecuteNonQuery();
+        }
+        return hasDanger;
+    }
+
+
+
     public static string Verify(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
     {
         string? path = request.Url?.AbsolutePath;
@@ -144,5 +188,25 @@ public class Player()
         {
             return false;
         }
+    }
+
+    public static bool Death(NpgsqlDataSource db, string playerName)
+    {
+        var cmd = db.CreateCommand(@"
+        SELECT name, is_dead
+        FROM public.player
+        WHERE name = $1 AND is_dead = true;
+        ");
+        cmd.Parameters.AddWithValue(playerName);
+
+        using var reader = cmd.ExecuteReader();
+        bool playerDeath = false;
+
+        if (reader.Read())
+        {
+            playerDeath = reader.GetBoolean(1);
+        }
+        reader.Close();
+        return playerDeath;
     }
 }

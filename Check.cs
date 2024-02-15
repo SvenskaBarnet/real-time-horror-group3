@@ -38,64 +38,87 @@ public class Check()
     public static string Windows(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
     {
         int roomId = PlayerPosition(db, request, response);
+        bool hasDanger = Player.RoomHasDanger(db, request,response);
+        string message = string.Empty;
 
-        var windows = db.CreateCommand(@"
+        if (!hasDanger)
+        {
+
+            var windows = db.CreateCommand(@"
                         SELECT name, is_locked
                         FROM entry_point
                         WHERE room_id = $1 AND type = 'Window';
                         ");
-        windows.Parameters.AddWithValue(roomId);
-        using var reader2 = windows.ExecuteReader();
+            windows.Parameters.AddWithValue(roomId);
+            using var reader2 = windows.ExecuteReader();
 
-        string message = string.Empty;
-        while (reader2.Read())
-        {
-            switch (reader2.GetBoolean(1))
+            while (reader2.Read())
             {
-                case true:
-                    message += $"Window {reader2.GetString(0)} is locked.\n";
-                    break;
-                case false:
-                    message += $"Window {reader2.GetString(0)} is unlocked.\n";
-                    break;
+                switch (reader2.GetBoolean(1))
+                {
+                    case true:
+                        message += $"Window {reader2.GetString(0)} is locked.\n";
+                        break;
+                    case false:
+                        message += $"Window {reader2.GetString(0)} is unlocked.\n";
+                        break;
+                }
             }
+
+            reader2.Close();
+            GameEvent.RandomTrigger(db);
+            response.StatusCode = (int)HttpStatusCode.OK;
+            return message;
+        }
+        else
+        {
+            GameEvent.RandomTrigger(db);
+            response.StatusCode = (int)HttpStatusCode.OK;
+            message = "You forgot to clear the room of dangers and you are now dead.";
+            return message;
         }
 
-        GameEvent.RandomTrigger(db);
-        response.StatusCode = (int)HttpStatusCode.OK;
-
-        reader2.Close();
-        return message;
     }
     public static string Doors(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
     {
         int roomId = PlayerPosition(db, request, response);
+        string message = string.Empty;
+        bool hasDanger = Player.RoomHasDanger(db, request, response);
 
-        var windows = db.CreateCommand(@"
+        if (!hasDanger)
+        {
+            var windows = db.CreateCommand(@"
                         SELECT name, is_locked
                         FROM entry_point
                         WHERE room_id = $1 AND type = 'Door';
                         ");
-        windows.Parameters.AddWithValue(roomId);
-        using var reader2 = windows.ExecuteReader();
+            windows.Parameters.AddWithValue(roomId);
+            using var reader2 = windows.ExecuteReader();
 
-        string message = string.Empty;
-        while (reader2.Read())
-        {
-            switch (reader2.GetBoolean(1))
+            while (reader2.Read())
             {
-                case true:
-                    message += $"Door {reader2.GetString(0)} is locked.\n";
-                    break;
-                case false:
-                    message += $"Door {reader2.GetString(0)} is unlocked.\n";
-                    break;
+                switch (reader2.GetBoolean(1))
+                {
+                    case true:
+                        message += $"Door {reader2.GetString(0)} is locked.\n";
+                        break;
+                    case false:
+                        message += $"Door {reader2.GetString(0)} is unlocked.\n";
+                        break;
+                }
             }
+            GameEvent.RandomTrigger(db);
+            response.StatusCode = (int)HttpStatusCode.OK;
+            reader2.Close();
+            return message;
         }
-        GameEvent.RandomTrigger(db);
-        response.StatusCode = (int)HttpStatusCode.OK;
-        reader2.Close();
-        return message;
+        else
+        {
+            GameEvent.RandomTrigger(db);
+            response.StatusCode = (int)HttpStatusCode.OK;
+            message = "You forgot to clear the room of dangers and you are now dead.";
+            return message;
+        }
     }
 
     public static string EntryPoints(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response, string playerName)
