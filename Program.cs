@@ -60,7 +60,7 @@ void Router(IAsyncResult result)
             {
                 switch (request.Url?.AbsolutePath.ToLower())
                 {
-                    case (string path) when path == "/new-player":
+                    case (string path) when path == "/player":
                         if (request.HttpMethod is "POST")
                         {
 

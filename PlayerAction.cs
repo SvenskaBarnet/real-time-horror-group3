@@ -8,6 +8,8 @@ public class PlayerAction()
     public static string Lock(NpgsqlDataSource db, string type, HttpListenerRequest request, HttpListenerResponse response)
     {
         string message = string.Empty;
+
+        // IF exists sen ska if-satsen  köras annars inte 
         bool hasDanger = Player.RoomHasDanger(db, request, response);
         if (!hasDanger)
         {
