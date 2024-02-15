@@ -63,15 +63,26 @@ public class Player()
 
         string playerName = Verify(db, request, response);
 
+        bool hasDanger = Player.RoomHasDanger(db, room);
+
         var cmd = db.CreateCommand(@"
                         UPDATE public.player
-                        SET location = $1
-                        WHERE name = $2;
+                        SET location = $1,
+                        is_dead = $2
+                        WHERE name = $3;
                         ");
         cmd.Parameters.AddWithValue(room);
+        cmd.Parameters.AddWithValue(hasDanger);
         cmd.Parameters.AddWithValue(playerName);
 
         cmd.ExecuteNonQuery();
+
+        if (Death(db, playerName))
+        {
+            response.StatusCode = (int)HttpStatusCode.OK;
+            string message1 = "Oh no, you are dead!";
+            return message1;
+        }
 
         GameEvent.RandomTrigger(db);
 
@@ -80,6 +91,30 @@ public class Player()
 
         return message;
     }
+
+    public static bool RoomHasDanger(NpgsqlDataSource db, int roomId)
+    {
+        var cmd = db.CreateCommand(@"
+        SELECT has_danger
+        FROM public.room
+        WHERE id = $1;
+    ");
+        cmd.Parameters.AddWithValue(roomId);
+
+        using var reader = cmd.ExecuteReader();
+
+        bool hasDanger = false;
+        if (reader.Read())
+        {
+            hasDanger = reader.GetBoolean(0);
+        }
+
+        reader.Close();
+        return hasDanger;
+    }
+
+
+
     public static string Verify(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
     {
         string? path = request.Url?.AbsolutePath;
@@ -144,6 +179,28 @@ public class Player()
         {
             return false;
         }
+    }
+
+    public static bool Death(NpgsqlDataSource db, string playerName)
+    {
+        var cmd = db.CreateCommand(@"
+        SELECT is_dead
+        FROM public.player
+        WHERE name = $1;
+        ");
+        cmd.Parameters.AddWithValue(playerName);
+
+        using var reader = cmd.ExecuteReader();
+        bool playerDeath = false;
+
+        if (reader.Read())
+        {
+            playerDeath = reader.GetBoolean(0);
+        }
+        reader.Close();
+        return playerDeath;
+
+       
     }
 
     public static bool Death(NpgsqlDataSource db)
