@@ -42,7 +42,8 @@ public class Player()
         cmd.Parameters.AddWithValue(name);
         cmd.ExecuteNonQuery();
 
-        string message = $"Player '{name}' has been created. Type /ready when you are ready. Game can only start when all players are ready.";
+        string message = @$"Player '{name}' has been created. Type /ready when you are ready. Game can only start when all players are ready.
+        And you will start in 'Kitchen'";
         response.StatusCode = (int)HttpStatusCode.Created;
 
         return message;
