@@ -52,6 +52,7 @@ void Router(IAsyncResult result)
         HttpListenerResponse response = context.Response;
         HttpListenerRequest request = context.Request;
 
+
         response.ContentType = "text/plain";
 
         if (Check.EntryPointTimer(db) == false && Check.IfGameOver(db, request, response) == false)
@@ -63,7 +64,6 @@ void Router(IAsyncResult result)
                     case (string path) when path == "/player":
                         if (request.HttpMethod is "POST")
                         {
-
                             message = Player.Create(db, request, response);
                         }
                         break;
