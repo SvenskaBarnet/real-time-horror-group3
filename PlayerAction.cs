@@ -22,20 +22,19 @@ public class PlayerAction()
 
         using var reader1 = selectChoise.ExecuteReader();
 
-        int validChoise = 0;
+        int validChoice = 0;
         if (reader1.Read())
         {
-            validChoise = reader1.GetInt32(0);
+            validChoice = reader1.GetInt32(0);
         }
 
         reader1.Close();
 
         bool hasDanger = Player.RoomHasDanger(db, request, response);
-        if (!hasDanger)
+        if (validChoice > 0)
         {
-            if (validChoise > 0)
+            if (!hasDanger)
             {
-
                 var cmd = db.CreateCommand(@$"
 
                 UPDATE entry_point
@@ -54,15 +53,15 @@ public class PlayerAction()
             }
             else
             {
-                message = "Not a valid choice";
+                GameEvent.RandomTrigger(db);
+                response.StatusCode = (int)HttpStatusCode.OK;
+                message = "You forgot to clear the room of dangers and you are now dead.";
                 return message;
             }
         }
         else
         {
-            GameEvent.RandomTrigger(db);
-            response.StatusCode = (int)HttpStatusCode.OK;
-            message = "You forgot to clear the room of dangers and you are now dead.";
+            message = "Not a valid choice";
             return message;
         }
     }
