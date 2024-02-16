@@ -12,15 +12,15 @@ public class PlayerAction()
         StreamReader reader = new(request.InputStream, request.ContentEncoding);
         string lockName = reader.ReadToEnd();
 
-        var selectChoise = db.CreateCommand(@$"
+        var selectChoice = db.CreateCommand(@$"
             SELECT COUNT(*) 
             FROM public.entry_point     
             WHERE name = $1
             ");
-        selectChoise.Parameters.AddWithValue(lockName);
-        selectChoise.ExecuteNonQuery();
+        selectChoice.Parameters.AddWithValue(lockName);
+        selectChoice.ExecuteNonQuery();
 
-        using var reader1 = selectChoise.ExecuteReader();
+        using var reader1 = selectChoice.ExecuteReader();
 
         int validChoice = 0;
         if (reader1.Read())
