@@ -18,14 +18,14 @@ public class Player()
             ");
         selectChoice.Parameters.AddWithValue(checkIfNameExists);
 
-        using var reader1 = selectChoice.ExecuteReader();
+        using var checkName = selectChoice.ExecuteReader();
 
         int validChoice = 0;
-        if (reader1.Read())
+        if (checkName.Read())
         {
-            validChoice = reader1.GetInt32(0);
+            validChoice = checkName.GetInt32(0);
         }
-        reader1.Close();
+        reader.Close();
 
         if (validChoice > 0)
         {
