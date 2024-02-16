@@ -7,7 +7,7 @@ public class Check()
 {
     public static string Room(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
     {
-        GameEvent.RandomTrigger(db);
+        string eventMessage = GameEvent.RandomTrigger(db);
         string? message = string.Empty;
 
         int roomId = PlayerPosition(db, request, response);
@@ -24,11 +24,11 @@ public class Check()
         {
             if (reader.GetInt32(0) != 0)
             {
-                message = "You found a dangerous object in this room, be careful!";
+                message = $"You found a dangerous object in this room, be careful!{eventMessage}";
             }
             else
             {
-                message = "This room is safe, no dangers to be found.";
+                message = $"This room is safe, no dangers to be found.{eventMessage}";
             }
         }
         reader.Close();
@@ -66,7 +66,9 @@ public class Check()
             }
 
             reader2.Close();
-            GameEvent.RandomTrigger(db);
+            string eventMessage = GameEvent.RandomTrigger(db);
+            message += eventMessage;
+
             response.StatusCode = (int)HttpStatusCode.OK;
             return message;
         }
@@ -107,7 +109,8 @@ public class Check()
                         break;
                 }
             }
-            GameEvent.RandomTrigger(db);
+            string eventMessage = GameEvent.RandomTrigger(db);
+            message += eventMessage;
             response.StatusCode = (int)HttpStatusCode.OK;
             reader2.Close();
             return message;
