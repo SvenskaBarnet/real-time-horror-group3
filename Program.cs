@@ -54,9 +54,9 @@ void Router(IAsyncResult result)
 
         response.ContentType = "text/plain";
 
-        if (Session.EntryPointTimer(db) == false && Highscore.HandleGameOver(db, request, response) == false)
+        if (Check.EntryPointTimer(db) == false && Check.IfGameOver(db, request, response) == false)
         {
-            if (Player.Death(db, Player.Verify(db,request)) == false)
+            if (Check.IfDead(db, Check.VerifyPlayer(db,request)) == false)
             {
                 switch (request.Url?.AbsolutePath.ToLower())
                 {
@@ -68,21 +68,20 @@ void Router(IAsyncResult result)
                         }
                         break;
 
-                    case (string path) when path == $"/{Player.Verify(db, request)}/ready" && path != $"//ready":
+                    case (string path) when path == $"/{Check.VerifyPlayer(db, request)}/ready" && path != $"//ready":
                         if (request.HttpMethod == "PATCH")
                         {
                             message = Player.Ready(db, request, response);
                         }
                         break;
 
-                    case (string path) when path == $"/{Player.Verify(db, request)}/start" && path != $"//start":
+                    case (string path) when path == $"/{Check.VerifyPlayer(db, request)}/start" && path != $"//start":
                         if (request.HttpMethod is "GET")
                         {
-                            bool playersReady = Player.CheckAllPlayersReady(db, response);
+                            bool playersReady = Check.AllPlayersReady(db, response);
                             if (playersReady)
                             {
-                                Intro intro = new Intro();
-                                message = Intro.Story(response);
+                                message = GameMessage.Story(response);
                                 Session.Start(db);
                                 sessionStarted = true;
                             }
@@ -94,7 +93,7 @@ void Router(IAsyncResult result)
                         }
                         break;
 
-                    case (string path) when path == $"/{Player.Verify(db, request)}/move" && path != $"//move":
+                    case (string path) when path == $"/{Check.VerifyPlayer(db, request)}/move" && path != $"//move":
                         if (sessionStarted)
                         {
                             if (request.HttpMethod is "PATCH")
@@ -109,7 +108,7 @@ void Router(IAsyncResult result)
                         }
                         break;
 
-                    case (string path) when path == $"/{Player.Verify(db, request)}/windows" && path != $"//windows":
+                    case (string path) when path == $"/{Check.VerifyPlayer(db, request)}/windows" && path != $"//windows":
                         if (sessionStarted)
                         {
                             if (request.HttpMethod is "GET")
@@ -118,7 +117,7 @@ void Router(IAsyncResult result)
                             }
                             else if (request.HttpMethod is "PATCH")
                             {
-                                message = PlayerAction.Lock(db, "Window", request, response);
+                                message = Player.Lock(db, "Window", request, response);
                             }
                         }
                         else
@@ -128,7 +127,7 @@ void Router(IAsyncResult result)
                         }
                         break;
 
-                    case (string path) when path == $"/{Player.Verify(db, request)}/doors" && path != $"//doors":
+                    case (string path) when path == $"/{Check.VerifyPlayer(db, request)}/doors" && path != $"//doors":
                         if (sessionStarted)
                         {
                             if (request.HttpMethod is "GET")
@@ -137,7 +136,7 @@ void Router(IAsyncResult result)
                             }
                             else if (request.HttpMethod is "PATCH")
                             {
-                                message = PlayerAction.Lock(db, "Door", request, response);
+                                message = Player.Lock(db, "Door", request, response);
                             }
                         }
                         else
@@ -147,7 +146,7 @@ void Router(IAsyncResult result)
                         }
                         break;
 
-                    case (string path) when path == $"/{Player.Verify(db, request)}/room" && path != $"//room":
+                    case (string path) when path == $"/{Check.VerifyPlayer(db, request)}/room" && path != $"//room":
                         if (sessionStarted)
                         {
                             if (request.HttpMethod is "GET")
@@ -156,7 +155,7 @@ void Router(IAsyncResult result)
                             }
                             else if (request.HttpMethod is "PATCH")
                             {
-                                message = PlayerAction.RemoveDanger(db, request, response);
+                                message = Player.RemoveDanger(db, request, response);
                             }
                         }
                         else
@@ -166,7 +165,7 @@ void Router(IAsyncResult result)
                         }
                         break;
 
-                    case (string path) when path == $"/{Player.Verify(db, request)}/time" && path != $"//time":
+                    case (string path) when path == $"/{Check.VerifyPlayer(db, request)}/time" && path != $"//time":
                         if (sessionStarted)
                         {
                             if (request.HttpMethod is "GET")
@@ -200,10 +199,10 @@ void Router(IAsyncResult result)
         {
             if (gameOver == false)
             {
-                Highscore.AddScore(db, request, response);
+                GameEvent.AddScore(db, request, response);
                 gameOver = true;
             }
-            message = Highscore.PrintGameOverScreen(db, request, response);
+            message = GameMessage.PrintGameOverScreen(db, request, response);
 
         }
 

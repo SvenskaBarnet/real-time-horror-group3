@@ -25,7 +25,7 @@ public class Player()
 
     public static string Ready(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
     {
-        string playerName = Verify(db, request);
+        string playerName = Check.VerifyPlayer(db, request);
 
         var cmd = db.CreateCommand(@"
         UPDATE public.player
@@ -65,9 +65,9 @@ public class Player()
 
         if (roomId != 0)
         {
-            string playerName = Verify(db, request);
+            string playerName = Check.VerifyPlayer(db, request);
 
-            bool hasDanger = Player.RoomHasDanger(db, request, response);
+            bool hasDanger = Check.RoomHasDanger(db, request, response);
 
             var cmd = db.CreateCommand(@"
                         UPDATE public.player
@@ -102,120 +102,78 @@ public class Player()
         }
     }
 
-    public static bool RoomHasDanger(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
+    public static string Lock(NpgsqlDataSource db, string type, HttpListenerRequest request, HttpListenerResponse response)
     {
-        var cmd = db.CreateCommand(@"
-        SELECT has_danger
-        FROM public.room
-        WHERE id = $1;
-    ");
-        cmd.Parameters.AddWithValue(Check.PlayerPosition(db, request, response));
+        string message = string.Empty;
+        StreamReader reader = new(request.InputStream, request.ContentEncoding);
+        string lockName = reader.ReadToEnd();
 
-        using var reader = cmd.ExecuteReader();
-
-        bool hasDanger = false;
-        if (reader.Read())
-        {
-            hasDanger = reader.GetBoolean(0);
-        }
-        reader.Close();
-
-        if (hasDanger)
-        {
-            var killPlayer = db.CreateCommand(@"
-                UPDATE public.player
-                SET is_dead = true
-                WHERE name = $1
-                ");
-            killPlayer.Parameters.AddWithValue(Player.Verify(db, request));
-            killPlayer.ExecuteNonQuery();
-        }
-        return hasDanger;
-    }
-
-    public static string Verify(NpgsqlDataSource db, HttpListenerRequest request)
-    {
-        string? path = request.Url?.AbsolutePath;
-        string? name = path?.Split('/')[1] ?? string.Empty;
-        string username = string.Empty;
-
-        var cmd = db.CreateCommand(@"
-            SELECT (name)
-            FROM public.player
+        var selectChoice = db.CreateCommand(@$"
+            SELECT COUNT(*) 
+            FROM public.entry_point     
             WHERE name = $1
             ");
-        cmd.Parameters.AddWithValue(name ?? string.Empty);
-        using var reader = cmd.ExecuteReader();
+        selectChoice.Parameters.AddWithValue(lockName);
+        selectChoice.ExecuteNonQuery();
 
-        if (reader.Read())
-        {
-            username = reader.GetString(0);
-        }
+        using var reader1 = selectChoice.ExecuteReader();
 
-        reader.Close();
-        return username;
-    }
-
-    public static bool CheckAllPlayersReady(NpgsqlDataSource db, HttpListenerResponse response)
-    {
-        using var cmd = db.CreateCommand(@"
-        SELECT COUNT(*)
-        FROM public.player
-        ");
-
-        using var reader1 = cmd.ExecuteReader();
-
-        int totalPlayers = 0;
+        int validChoice = 0;
         if (reader1.Read())
         {
-            totalPlayers = reader1.GetInt32(0);
+            validChoice = reader1.GetInt32(0);
         }
 
         reader1.Close();
 
-        var cmd1 = db.CreateCommand(@"
-        SELECT COUNT(*) 
-        FROM public.player 
-        WHERE is_ready = true
-        ");
-
-        using var reader2 = cmd1.ExecuteReader();
-
-        int readyPlayers = 0;
-        if (reader2.Read())
+        bool hasDanger = Check.RoomHasDanger(db, request, response);
+        if (validChoice > 0)
         {
-            readyPlayers = reader2.GetInt32(0);
-        }
-        response.StatusCode = (int)HttpStatusCode.OK;
+            if (!hasDanger)
+            {
+                var cmd = db.CreateCommand(@$"
 
-        reader2.Close();
-        if (totalPlayers == readyPlayers)
-        {
-            return true;
+                UPDATE entry_point
+                SET is_locked = true, ""time"" = null
+                WHERE name = $1 AND room_id = $2 AND type = $3;");
+
+                cmd.Parameters.AddWithValue(lockName);
+                cmd.Parameters.AddWithValue(Check.PlayerPosition(db, request, response));
+                cmd.Parameters.AddWithValue(type);
+                cmd.ExecuteNonQuery();
+
+                message = $"{type} {lockName} is now locked";
+                response.StatusCode = (int)HttpStatusCode.OK;
+                GameEvent.RandomTrigger(db);
+                return message;
+            }
+            else
+            {
+                GameEvent.RandomTrigger(db);
+                response.StatusCode = (int)HttpStatusCode.OK;
+                message = "You forgot to clear the room of dangers and you are now dead.";
+                return message;
+            }
         }
         else
         {
-            return false;
+            message = "Not a valid choice";
+            return message;
         }
     }
-
-    public static bool Death(NpgsqlDataSource db, string playerName)
+    public static string RemoveDanger(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
     {
-        var cmd = db.CreateCommand(@"
-        SELECT name, is_dead
-        FROM public.player
-        WHERE name = $1 AND is_dead = true;
-        ");
-        cmd.Parameters.AddWithValue(playerName);
+        int roomId = Check.PlayerPosition(db, request, response);
 
-        using var reader = cmd.ExecuteReader();
-        bool playerDeath = false;
+        NpgsqlCommand removeDanger = db.CreateCommand(@"
+            UPDATE public.room
+            SET has_danger = false
+            WHERE id = $1;
+            ");
+        removeDanger.Parameters.AddWithValue(roomId);
+        removeDanger.ExecuteNonQuery();
 
-        if (reader.Read())
-        {
-            playerDeath = reader.GetBoolean(1);
-        }
-        reader.Close();
-        return playerDeath;
+        string message = "You cleared the room of dangerous objects, it's safe now.";
+        return message;
     }
 }
