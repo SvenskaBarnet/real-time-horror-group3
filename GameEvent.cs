@@ -4,7 +4,7 @@ using System.Net;
 namespace real_time_horror_group3;
 public class GameEvent()
 {
-    public static void SpawnDangerousObject(NpgsqlDataSource db)
+    public static string SpawnDangerousObject(NpgsqlDataSource db)
     {
         Random random = new();
         int randomRoom = random.Next(1, 4);
@@ -16,6 +16,18 @@ public class GameEvent()
             ");
         spawnObject.Parameters.AddWithValue(randomRoom);
         spawnObject.ExecuteNonQuery();
+
+        switch (randomRoom)
+        {
+            case 1:
+                return "Kitchen";
+            case 2:
+                return "Hallway";
+            case 3:
+                return "Living room";
+            default:
+                return "Error finding room for spawning object";
+        }
     }
     public static string UnlockEntry(NpgsqlDataSource db)
     {
@@ -64,7 +76,7 @@ public class GameEvent()
             case 3:
                 return "Living room";
             default:
-                return "Invalid room";
+                return "Error for finding room for unlocking window";
 
         }
     }
@@ -87,19 +99,17 @@ public class GameEvent()
             int randomEvent = random.Next(1, 3);
             if (randomEvent == 1)
             {
-                return $"{RandomEventMessage("unlock")}{GameEvent.UnlockEntry(db)}";
+                return $"\n\n{RandomEventMessage("unlock")}{GameEvent.UnlockEntry(db)}";
             }
             else
             {
-                GameEvent.SpawnDangerousObject(db);
-                return $"{RandomEventMessage("object")}{GameEvent.UnlockEntry(db)}";
+                return $"\n\n{RandomEventMessage("object")}{GameEvent.SpawnDangerousObject(db)}";
             }
         }
         else
         {
             return string.Empty;
         }
-
     }
 
     public static string RandomEventMessage(string eventType)
@@ -129,6 +139,31 @@ public class GameEvent()
         entryMessages.Add("The sound of something dragging across the ground grows louder outside the ");
         entryMessages.Add("Unearthly moans echo through the darkness, seeming to originate from the ");
 
+        List<string> objectMessages = new List<string>();
+        objectMessages.Add("The sound of glass shattering echoes from the ");
+        objectMessages.Add("A sudden crash reverberates from the ");
+        objectMessages.Add("The unmistakable click of a bear trap being set emanates from the ");
+        objectMessages.Add("An eerie whisper seems to come from the darkest corner of the ");
+        objectMessages.Add("The rustling of papers suggests movement inside the ");
+        objectMessages.Add("A door slams shut with a forceful bang inside the ");
+        objectMessages.Add("The faint sound of footsteps can be heard pacing within the ");
+        objectMessages.Add("The muffled sound of stifled cries echoes from the ");
+        objectMessages.Add("The rattling of chains emanates from the depths of the ");
+        objectMessages.Add("A chilling laughter echoes from the hidden recesses of the ");
+        objectMessages.Add("The unsettling sound of a child's toy activating echoes from the ");
+        objectMessages.Add("A sinister melody plays from a music box within the ");
+        objectMessages.Add("The creaking of floorboards suggests movement within the ");
+        objectMessages.Add("An otherworldly glow emanates from the ");
+        objectMessages.Add("The sound of a door unlocking sends shivers down your spine from the ");
+        objectMessages.Add("The scratching of claws against wood can be heard within the ");
+        objectMessages.Add("The flickering of lights casts eerie shadows within the ");
+        objectMessages.Add("A sudden, chilling silence falls upon the ");
+        objectMessages.Add("The sound of heavy breathing can be heard coming from the ");
+        objectMessages.Add("Unsettling whispers seem to emanate from behind the walls of the ");
+        objectMessages.Add("The unsettling sound of something dragging across the floor echoes from the ");
+        objectMessages.Add("A bloodcurdling scream pierces the silence from within the ");
+        objectMessages.Add("The eerie ticking of a clock echoes through the halls of the ");
+
         Random random = new Random();
         int randomMessage = 0;
         switch (eventType)
@@ -137,8 +172,8 @@ public class GameEvent()
                 randomMessage = random.Next(0, entryMessages.Count);
                 return entryMessages[randomMessage];
             case "object":
-                randomMessage = random.Next(0, entryMessages.Count);
-                return entryMessages[randomMessage];
+                randomMessage = random.Next(0, objectMessages.Count);
+                return objectMessages[randomMessage];
             default:
                 return "Error in choosing Event Message";
         }

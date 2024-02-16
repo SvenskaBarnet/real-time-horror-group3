@@ -105,7 +105,7 @@ public class Player()
 
             cmd.ExecuteNonQuery();
 
-            GameEvent.RandomTrigger(db);
+            string eventMessage = GameEvent.RandomTrigger(db);
 
             if (hasDanger)
             {
@@ -116,7 +116,7 @@ public class Player()
             else
             {
                 response.StatusCode = (int)HttpStatusCode.OK;
-                message = $"{Check.EntryPoints(db, request, response, playerName)}";
+                message = $"{Check.EntryPoints(db, request, response, playerName)}{eventMessage}";
                 return message;
             }
         }
@@ -168,9 +168,9 @@ public class Player()
                 cmd.Parameters.AddWithValue(type);
                 cmd.ExecuteNonQuery();
 
-                message = $"{type} {lockName} is now locked";
+                string eventMessage = GameEvent.RandomTrigger(db);
+                message = $"{type} {lockName} is now locked{eventMessage}";
                 response.StatusCode = (int)HttpStatusCode.OK;
-                GameEvent.RandomTrigger(db);
                 return message;
             }
             else
