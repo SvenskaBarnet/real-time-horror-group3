@@ -17,7 +17,7 @@ public class GameEvent()
         spawnObject.Parameters.AddWithValue(randomRoom);
         spawnObject.ExecuteNonQuery();
     }
-    public static void UnlockEntry(NpgsqlDataSource db)
+    public static string UnlockEntry(NpgsqlDataSource db)
     {
         var entryCount = db.CreateCommand(@"
             SELECT COUNT(id)
@@ -41,9 +41,35 @@ public class GameEvent()
             ");
         lockEntry.Parameters.AddWithValue(randomEntry);
         lockEntry.ExecuteNonQuery();
+
+        var getRoomId = db.CreateCommand(@"
+            SELECT room_id
+            FROM public.entry_point
+            WHERE id = $1
+            ");
+        getRoomId.Parameters.AddWithValue(randomEntry);
+        using var reader = getRoomId.ExecuteReader();
+
+        int roomId = 0;
+        if (reader.Read())
+        {
+            roomId = reader.GetInt32(0);
+        }
+        switch (roomId)
+        {
+            case 1:
+                return "Kitchen";
+            case 2:
+                return "Hallway";
+            case 3:
+                return "Living room";
+            default:
+                return "Invalid room";
+
+        }
     }
 
-    public static void RandomTrigger(NpgsqlDataSource db)
+    public static string RandomTrigger(NpgsqlDataSource db)
     {
         TimeSpan timeElapsed = Session.ElapsedTime(db);
 
@@ -59,15 +85,62 @@ public class GameEvent()
         if (randomValue <= probability)
         {
             int randomEvent = random.Next(1, 3);
-            switch (randomEvent)
+            if (randomEvent == 1)
             {
-                case 1:
-                    GameEvent.UnlockEntry(db);
-                    break;
-                case 2:
-                    GameEvent.SpawnDangerousObject(db);
-                    break;
+                return $"{RandomEventMessage("unlock")}{GameEvent.UnlockEntry(db)}";
             }
+            else
+            {
+                GameEvent.SpawnDangerousObject(db);
+                return $"{RandomEventMessage("object")}{GameEvent.UnlockEntry(db)}";
+            }
+        }
+        else
+        {
+            return string.Empty;
+        }
+
+    }
+
+    public static string RandomEventMessage(string eventType)
+
+    {
+        List<string> entryMessages = new List<string>();
+        entryMessages.Add("You hear a scraping sound from the ");
+        entryMessages.Add("There's a loud bang coming from the ");
+        entryMessages.Add("The sound of faint whispering echoes from the ");
+        entryMessages.Add("A rhythmic tapping resonates from the ");
+        entryMessages.Add("Something scratches at the ");
+        entryMessages.Add("The faint jingle of keys outside the ");
+        entryMessages.Add("Heavy breathing can be heard near the ");
+        entryMessages.Add("Footsteps approach closer to the ");
+        entryMessages.Add("A low, guttural growl emanates from the ");
+        entryMessages.Add("The sound of fingernails dragging along the ");
+        entryMessages.Add("The rustling of leaves masks the footsteps nearing the ");
+        entryMessages.Add("A soft, eerie humming fills the air around the ");
+        entryMessages.Add("Branches scrape against the windows of the ");
+        entryMessages.Add("Shadows dance menacingly outside the ");
+        entryMessages.Add("The faint sound of a child's laughter drifts from the ");
+        entryMessages.Add("An unsettling scratching noise comes from the ");
+        entryMessages.Add("The creaking of an old gate nearby sends shivers down your spine");
+        entryMessages.Add("A distant, mournful howl pierces the silence near the ");
+        entryMessages.Add("The unsettling sound of chains rattling outside the ");
+        entryMessages.Add("A cold breeze whistles through the cracks of the ");
+        entryMessages.Add("The sound of something dragging across the ground grows louder outside the ");
+        entryMessages.Add("Unearthly moans echo through the darkness, seeming to originate from the ");
+
+        Random random = new Random();
+        int randomMessage = 0;
+        switch (eventType)
+        {
+            case "unlock":
+                randomMessage = random.Next(0, entryMessages.Count);
+                return entryMessages[randomMessage];
+            case "object":
+                randomMessage = random.Next(0, entryMessages.Count);
+                return entryMessages[randomMessage];
+            default:
+                return "Error in choosing Event Message";
         }
     }
     public static void AddScore(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
