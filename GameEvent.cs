@@ -1,4 +1,5 @@
 ﻿using Npgsql;
+using System.Net;
 
 namespace real_time_horror_group3;
 public class GameEvent()
@@ -68,5 +69,33 @@ public class GameEvent()
                     break;
             }
         }
+    }
+    public static void AddScore(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
+    {
+
+        var selectName = db.CreateCommand(@"
+        SELECT name 
+        FROM public.player;
+        ");
+
+        using var reader = selectName.ExecuteReader();
+
+        string playerNames = string.Empty;
+
+        while (reader.Read())
+        {
+            playerNames += $"{reader.GetString(0)}, ";
+        }
+        playerNames = playerNames.Substring(0, playerNames.Length - 2);
+        reader.Close();
+
+        string time = Session.FormattedTime(db);
+        var highscore = db.CreateCommand(@"
+        INSERT INTO public.highscore(player_names, ""time"")
+        VALUES ($1, $2);
+    ");
+        highscore.Parameters.AddWithValue(playerNames);
+        highscore.Parameters.AddWithValue(time);
+        highscore.ExecuteNonQuery();
     }
 }

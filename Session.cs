@@ -33,40 +33,6 @@ public class Session()
         }
     }
 
-    public static bool EntryPointTimer(NpgsqlDataSource db)
-    {
-        bool gameOver = false;
-        var cmd = db.CreateCommand(@"
-        SELECT to_char(""time"", 'HH24:MI:SS')
-        FROM public.entry_point
-        WHERE time is not null;
-        ");
-
-        using var reader = cmd.ExecuteReader();
-        TimeOnly currentTime = TimeOnly.FromDateTime(DateTime.Now);
-        String sessionStart = string.Empty;
-
-        while (reader.Read())
-        {
-            sessionStart = reader.GetString(0);
-            var split = sessionStart.Split(":");
-
-            TimeOnly startTime = new(int.Parse(split[0]), int.Parse(split[1]), int.Parse(split[2]));
-
-            TimeSpan timeElapsed = currentTime - startTime;
-            if ((timeElapsed.TotalSeconds > 240)) // 4 minuter tills det blir "game over"
-            {
-                gameOver = true;
-                break;
-            }
-            else
-            {
-                gameOver = false;
-            }
-        }
-        reader.Close();
-        return gameOver;
-    }
     public static TimeSpan ElapsedTime(NpgsqlDataSource db)
     {
         var sessionStart = db.CreateCommand(@"
