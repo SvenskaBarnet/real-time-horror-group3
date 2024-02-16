@@ -8,33 +8,59 @@ public class PlayerAction()
     public static string Lock(NpgsqlDataSource db, string type, HttpListenerRequest request, HttpListenerResponse response)
     {
         string message = string.Empty;
-        bool hasDanger = Player.RoomHasDanger(db, request, response);
-        if (!hasDanger)
+        StreamReader reader = new(request.InputStream, request.ContentEncoding);
+        string lockName = reader.ReadToEnd();
+
+        var selectChoice = db.CreateCommand(@$"
+            SELECT COUNT(*) 
+            FROM public.entry_point     
+            WHERE name = $1
+            ");
+        selectChoice.Parameters.AddWithValue(lockName);
+        selectChoice.ExecuteNonQuery();
+
+        using var reader1 = selectChoice.ExecuteReader();
+
+        int validChoice = 0;
+        if (reader1.Read())
         {
-            StreamReader reader = new(request.InputStream, request.ContentEncoding);
-            string lockName = reader.ReadToEnd();
+            validChoice = reader1.GetInt32(0);
+        }
 
-            var cmd = db.CreateCommand(@$"
+        reader1.Close();
 
-            UPDATE entry_point
-            SET is_locked = true, ""time"" = null
-            WHERE name = $1 AND room_id = $2 AND type = $3;");
+        bool hasDanger = Player.RoomHasDanger(db, request, response);
+        if (validChoice > 0)
+        {
+            if (!hasDanger)
+            {
+                var cmd = db.CreateCommand(@$"
 
-            cmd.Parameters.AddWithValue(lockName);
-            cmd.Parameters.AddWithValue(Check.PlayerPosition(db, request, response));
-            cmd.Parameters.AddWithValue(type);
-            cmd.ExecuteNonQuery();
+                UPDATE entry_point
+                SET is_locked = true, ""time"" = null
+                WHERE name = $1 AND room_id = $2 AND type = $3;");
 
-            message = $"{type} {lockName} is now locked";
-            response.StatusCode = (int)HttpStatusCode.OK;
-            GameEvent.RandomTrigger(db);
-            return message;
+                cmd.Parameters.AddWithValue(lockName);
+                cmd.Parameters.AddWithValue(Check.PlayerPosition(db, request, response));
+                cmd.Parameters.AddWithValue(type);
+                cmd.ExecuteNonQuery();
+
+                message = $"{type} {lockName} is now locked";
+                response.StatusCode = (int)HttpStatusCode.OK;
+                GameEvent.RandomTrigger(db);
+                return message;
+            }
+            else
+            {
+                GameEvent.RandomTrigger(db);
+                response.StatusCode = (int)HttpStatusCode.OK;
+                message = "You forgot to clear the room of dangers and you are now dead.";
+                return message;
+            }
         }
         else
         {
-            GameEvent.RandomTrigger(db);
-            response.StatusCode = (int)HttpStatusCode.OK;
-            message = "You forgot to clear the room of dangers and you are now dead.";
+            message = "Not a valid choice";
             return message;
         }
     }

@@ -9,10 +9,10 @@ public class GameMessage()
 List of possible commands and paths:
 
 Create player: 
-curl -d <player name> localhost:3000/new-player
+curl -d <player name> localhost:3000/player
 
 Ready:
-curl -X PATCH localhost:3000/jimmy/ready
+curl -X PATCH localhost:3000/<player name>/ready
 
 Start game: 
 curl localhost:3000/<player name>/start
