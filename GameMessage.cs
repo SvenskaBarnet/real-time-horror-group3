@@ -10,7 +10,7 @@ public class GameMessage()
 List of possible commands and paths:
 
 Create player: 
-curl -d <player name> localhost:3000/player
+curl -d ""<player name>"" localhost:3000/player
 
 Ready:
 curl -X PATCH localhost:3000/<player name>/ready
@@ -18,26 +18,29 @@ curl -X PATCH localhost:3000/<player name>/ready
 Start game: 
 curl localhost:3000/<player name>/start
 
-Move: 
-curl -X PATCH -d <room name> localhost:3000/<player name>/move
+Move to room: 
+curl -X PATCH -d ""<room name>"" localhost:3000/<player name>/move
 
-Check window status: 
+Check status of windows in current room: 
 curl localhost:3000/<player name>/windows
 
-Check door status: 
+Check status of doors in current room: 
 curl localhost:3000/<player name>/doors
 
 Check room for danger:
 curl localhost3000/<player name>/room
 
 Lock window: 
-curl -X PATCH -d <window name> localhost:3000/<player name>/windows
+curl -X PATCH -d ""<window name>"" localhost:3000/<player name>/windows
 
 Lock door: 
-curl -X PATCH -d <door name> localhost:3000/<player name>/doors
+curl -X PATCH -d ""<door name>"" localhost:3000/<player name>/doors
 
 Remove danger:
 curl -X PATCH localhost:3000/<player name>/room
+
+See time elapsed since start
+curl localhost:3000/<player name>/time
 "; 
 
 
