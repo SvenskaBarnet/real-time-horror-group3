@@ -7,7 +7,32 @@ public class Player()
     public static string Create(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
     {
         StreamReader reader = new(request.InputStream, request.ContentEncoding);
-        string name = reader.ReadToEnd().ToLower();
+        
+
+
+        string checkIfNameExists = reader.ReadToEnd();
+        var selectChoice = db.CreateCommand(@$"
+            SELECT COUNT(*)
+            FROM public.player
+            WHERE name = $1
+            ");
+        selectChoice.Parameters.AddWithValue(checkIfNameExists);
+
+        using var reader1 = selectChoice.ExecuteReader();
+
+        int validChoice = 0;
+        if (reader1.Read())
+        {
+            validChoice = reader1.GetInt32(0);
+        }
+        reader1.Close();
+
+        if (validChoice > 0)
+        {
+            return "Player with this name already exists.";
+        }
+
+        string name = checkIfNameExists.ToLower();
 
         var cmd = db.CreateCommand(@"
                     INSERT INTO public.player
