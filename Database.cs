@@ -8,7 +8,7 @@ public class Database(NpgsqlDataSource db)
         await using var cmd = db.CreateCommand(@"
 ALTER DATABASE notsohomealone
 SET TIMEZONE TO +01;
-DROP TABLE IF EXISTS public.room, public.entry_point, public.danger, public.player, public.session;
+DROP TABLE IF EXISTS public.room, public.entry_point, public.danger, public.player, public.session, public.whiteboard;
 CREATE TABLE IF NOT EXISTS public.room
 (
     id serial,
@@ -52,6 +52,12 @@ CREATE TABLE IF NOT EXISTS public.highscore
     ""time"" text NOT NULL,
     PRIMARY KEY (id)
 );
+CREATE TABLE IF NOT EXISTS public.whiteboard
+(
+    id serial,
+    message text,
+    PRIMARY KEY (id)
+);
 
 ALTER TABLE IF EXISTS public.entry_point
     ADD CONSTRAINT room_id FOREIGN KEY (room_id)
@@ -80,8 +86,6 @@ VALUES
 	('A', 'Door', 3),
 	('A', 'Window', 3),
 	('B', 'Window', 3);
-
-
 
 ");
 

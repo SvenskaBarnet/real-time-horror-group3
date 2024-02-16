@@ -165,6 +165,25 @@ void Router(IAsyncResult result)
                         }
                         break;
 
+                    case (string path) when path == $"/{Check.VerifyPlayer(db, request)}/whiteboard" && path != $"//whiteboard":
+                        if (sessionStarted)
+                        {
+                            if (request.HttpMethod is "GET")
+                            {
+                                message = Player.ReadWhiteboard(db, request, response);
+                            }
+                            if (request.HttpMethod is "POST")
+                            {
+                                message = Player.WriteOnWhiteBoard(db, request, response);
+                            }
+                        }
+                        else
+                        {
+                            message = "You need to start game to play";
+                            response.StatusCode = (int)HttpStatusCode.OK;
+                        }
+                        break;
+
                     case (string path) when path == $"/{Check.VerifyPlayer(db, request)}/time" && path != $"//time":
                         if (sessionStarted)
                         {

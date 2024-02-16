@@ -1,5 +1,6 @@
 ﻿using Npgsql;
 using System.Net;
+using System.Security.Cryptography.X509Certificates;
 namespace real_time_horror_group3;
 
 public class Player()
@@ -186,6 +187,7 @@ public class Player()
             message = "Not a valid choice";
             return message;
         }
+      
     }
     public static string RemoveDanger(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
     {
@@ -201,5 +203,59 @@ public class Player()
 
         string message = "You cleared the room of dangerous objects, it's safe now.";
         return message;
+    }
+
+    public static string ReadWhiteboard(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
+    {
+        string message = string.Empty;
+        if (Check.PlayerPosition(db, request, response) == 1)
+        {
+            var readWhiteboard = db.CreateCommand(@"
+                SELECT *
+                FROM public.whiteboard
+                ORDER BY id DESC LIMIT 5
+                ");
+            using var reader = readWhiteboard.ExecuteReader();
+            while (reader.Read())
+            {
+                message += $"{reader.GetString(1)}\n";
+            }
+
+            response.StatusCode = (int)HttpStatusCode.OK;
+            return message;
+        }
+        else
+        {
+            message = "The whiteboard is not here, it's in the kitchen.";
+            response.StatusCode = (int)HttpStatusCode.OK;
+            return message;
+        }
+    }
+
+    public static string WriteOnWhiteBoard(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
+    {
+        string message = string.Empty;
+        if (Check.PlayerPosition(db, request, response) == 1)
+        {
+            StreamReader reader = new(request.InputStream, request.ContentEncoding);
+            string post = reader.ReadToEnd();
+
+            var postMessage = db.CreateCommand(@"
+                INSERT INTO public.whiteboard(message)
+                VALUES($1);
+                ");
+            postMessage.Parameters.AddWithValue(post);
+            postMessage.ExecuteNonQuery();
+
+            message = $"'{post}' added to the whiteboard.";
+            response.StatusCode = (int)HttpStatusCode.Created;
+            return message;
+        }
+        else
+        {
+            message = "The whiteboard is not here, it's in the kitchen.";
+            response.StatusCode= (int)HttpStatusCode.OK;
+            return message;
+        }
     }
 }
