@@ -30,21 +30,17 @@ public class PlayerAction()
 
         reader1.Close();
 
-
-
-
-        // IF exists sen ska if-satsen  köras annars inte 
         bool hasDanger = Player.RoomHasDanger(db, request, response);
         if (!hasDanger)
         {
-            if (validChoise < 0)
+            if (validChoise > 0)
             {
 
                 var cmd = db.CreateCommand(@$"
 
-            UPDATE entry_point
-            SET is_locked = true, ""time"" = null
-            WHERE name = $1 AND room_id = $2 AND type = $3;");
+                UPDATE entry_point
+                SET is_locked = true, ""time"" = null
+                WHERE name = $1 AND room_id = $2 AND type = $3;");
 
                 cmd.Parameters.AddWithValue(lockName);
                 cmd.Parameters.AddWithValue(Check.PlayerPosition(db, request, response));
@@ -58,15 +54,15 @@ public class PlayerAction()
             }
             else
             {
-                GameEvent.RandomTrigger(db);
-                response.StatusCode = (int)HttpStatusCode.OK;
-                message = "You forgot to clear the room of dangers and you are now dead.";
+                message = "Not a valid choice";
                 return message;
             }
         }
         else
         {
-            message = "Not a valid choice";
+            GameEvent.RandomTrigger(db);
+            response.StatusCode = (int)HttpStatusCode.OK;
+            message = "You forgot to clear the room of dangers and you are now dead.";
             return message;
         }
     }
