@@ -218,9 +218,10 @@ public class Player()
             using var reader = readWhiteboard.ExecuteReader();
             while (reader.Read())
             {
-                message += $"{reader.GetString(1)}\n";
+                message = $"{reader.GetString(1)}\n\n{message}";
             }
 
+            message = $"Messages on whiteboard:\n\n\n{message}";
             response.StatusCode = (int)HttpStatusCode.OK;
             return message;
         }
