@@ -57,7 +57,6 @@ while true; do
 			curl -s -d "$playername" localhost:3000/player
 			;;
 		"/ready")
-			echo "curl -s -X PATCH localhost:3000/$playername/ready"
 			curl -s -X PATCH localhost:3000/$playername/ready
 			;;
 		"/start")
@@ -105,15 +104,3 @@ while true; do
 			;;
 	esac
 done
-
-			
-
-
-
-
-
-
-
-
-
-
