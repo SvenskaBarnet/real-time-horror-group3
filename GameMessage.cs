@@ -28,7 +28,7 @@ Check status of doors in current room:
 curl localhost:3000/<player name>/doors
 
 Check room for danger:
-curl localhost3000/<player name>/room
+curl localhost:3000/<player name>/room
 
 Lock window: 
 curl -X PATCH -d ""<window name>"" localhost:3000/<player name>/windows
@@ -47,6 +47,9 @@ curl localhost:3000/<player name>/whiteboard
 
 See time elapsed since start
 curl localhost:3000/<player name>/time
+
+Room names: 'kitchen', 'hallway', 'living room'.
+Each room has 1 door 'A' and two windows 'A' & 'B'.
 "; 
 
 
@@ -87,16 +90,13 @@ curl localhost:3000/<player name>/time
     public static string Story(HttpListenerResponse respons)
     {
         string message = @"
-You wake up in your house by the lake, tired and confused about a sound you hear outside. 
-You are sure that you are home alone and when you go to the window you see two dark figures,
-could this be the burglars that have been all over the news lately? 
-You estimate you have 5 minutes until they reach your house.
-while talking to the police they said they will arrive in 30 minutes to save you.
-Hurry up and secure the home by locking all windows and doors.
-But be aware of your surroundings so you don't kill yourself.
-Check every room in the house carefully.
-Events could happen anytime.
-You need to continue to check the status in every room during your remaining time period.";
+You stand tired in your kitchen reheating some leftover noodles from yesterday.
+Suddenly you hear some strange banging noises coming from outside of the house
+Looking out the kitchen window you see two dark masked figures trying to break your garage door.
+OMG! They'll sure be going for the house next!
+You need to keep it secure as long as you can by checking
+every room ('kitchen', 'hallway', 'living room') for any open entry point.
+But be careful about your steps along the way, strange things could happen..";
         return message;
     }
 }
