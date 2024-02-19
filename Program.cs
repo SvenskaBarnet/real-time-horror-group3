@@ -203,6 +203,25 @@ void Router(IAsyncResult result)
                         message = GameMessage.Help(response);
                         break;
 
+                    case (string path) when path == $"/{Check.VerifyPlayer(db, request)}/restart" && path != $"//restart":
+                        if (request.HttpMethod is "GET")
+                        {
+                            bool playersReady = Check.AllPlayersReady(db, response);
+                            if (playersReady)
+                            {
+                                Session.ResetDBForNewSession(db);
+                                message = GameMessage.Story(response);
+                                Session.Start(db);
+                                sessionStarted = true;
+                            }
+                            else
+                            {
+                                message = "Not all players are ready. Please wait until all players are ready to start.";
+                                response.StatusCode = (int)HttpStatusCode.OK;
+                            }
+                        }
+                        break;
+
                     default:
                         message = GameMessage.NotFound(response);
                         break;

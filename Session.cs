@@ -59,4 +59,11 @@ public class Session()
         TimeSpan elapsedTime = ElapsedTime(db);
         return elapsedTime.ToString(@"hh\:mm\:ss");
     }
+
+    public static async void ResetDBForNewSession(NpgsqlDataSource db)
+    {
+
+        Database database = new(db);
+        await database.Create();
+    }
 }
