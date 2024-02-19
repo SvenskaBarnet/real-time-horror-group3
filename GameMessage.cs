@@ -39,6 +39,12 @@ curl -X PATCH -d ""<door name>"" localhost:3000/<player name>/doors
 Remove danger:
 curl -X PATCH localhost:3000/<player name>/room
 
+Write on whiteboard:
+curl -d ""<message>"" localhost:3000/<player name>/whiteboard
+
+Read posts on whiteboard:
+curl localhost:3000/<player name>/whiteboard
+
 See time elapsed since start
 curl localhost:3000/<player name>/time
 "; 

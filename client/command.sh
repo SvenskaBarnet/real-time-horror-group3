@@ -19,6 +19,8 @@ printf "%-26s %s\n" "Lock door:" "/lock/door"
 printf "%-26s %s\n" "Lock window A:" "/lock/window/A"
 printf "%-26s %s\n" "Lock window B:" "/lock/window/B"
 printf "%-26s %s\n" "Clear room of dangers:" "/secure/room"
+printf "%-26s %s\n" "Write on whiteboard:" "/whiteboard/write"
+printf "%-26s %s\n" "Read on whiteboard:" "/whiteboard/read"
 printf "%-26s %s\n" "See elapsed time:" "/time"
 printf "%-26s %s\n\n\n" "See available commands:" "/help"
 echo -en "${NC}"
@@ -46,51 +48,62 @@ while true; do
 			printf "%-26s %s\n" "Lock window A:" "/lock/window/A"
 			printf "%-26s %s\n" "Lock window B:" "/lock/window/B"
 			printf "%-26s %s\n" "Clear room of dangers:" "/secure/room"
-			printf "%-26s %s\n" "See elapsed time:" "/time"
-			printf "%-26s %s\n\n" "See available commands:" "/help"
+			printf "%-26s %s\n" "Write on whiteboard:" "/whiteboard/write"
+			printf "%-26s %s\n" "Read on whiteboard:" "/whiteboard/read"
+            printf "%-26s %s\n" "See elapsed time:" "/time"
+			printf "%-26s %s\n\n\n" "See available commands:" "/help"
 			echo -en "${NC}"
 			;;
 		"/player")
 			echo -en "${YELLOW}"
-			read -p "Enter player name: " playername 
+			IFS= read -r -p "Enter player name: " playername 
 			echo -en "${NC}"
 			curl -s -d "$playername" localhost:3000/player
 			;;
 		"/ready")
-			curl -s -X PATCH localhost:3000/$playername/ready
+			curl -s -X PATCH localhost:3000/"$playername"/ready
 			;;
 		"/start")
-			curl -s localhost:3000/$playername/start
+			curl -s localhost:3000/"$playername"/start
 			;;
 		"/check/room")
-			curl -s localhost:3000/$playername/room
+			curl -s localhost:3000/"$playername"/room
 			;;
 		"/check/windows")
-			curl -s localhost:3000/$playername/windows
+			curl -s localhost:3000/"$playername"/windows
 			;;
 		"/check/doors")
-			curl -s localhost:3000/$playername/doors
+			curl -s localhost:3000/"$playername"/doors
 			;;
 		"/move/kitchen")
-			curl -s -X PATCH -d "kitchen" localhost:3000/$playername/move
+			curl -s -X PATCH -d "kitchen" localhost:3000/"$playername"/move
 			;;
 		"/move/hallway")
-			curl -s -X PATCH -d "hallway" localhost:3000/$playername/move
+			curl -s -X PATCH -d "hallway" localhost:3000/"$playername"/move
 			;;
 		"/move/living room")
-			curl -s -X PATCH -d "living room" localhost:3000/$playername/move
+			curl -s -X PATCH -d "living room" localhost:3000/"$playername"/move
 			;;
 		"/lock/door")
-			curl -s -X PATCH -d "A" localhost:3000/$playername/doors
+			curl -s -X PATCH -d "A" localhost:3000/"$playername"/doors
 			;;
 		"/lock/window/A")
-			curl -s -X PATCH -d "A" localhost:3000/$playername/windows
+			curl -s -X PATCH -d "A" localhost:3000/"$playername"/windows
 			;;
 		"/lock/window/B")
-			curl -s -X PATCH -d "B" localhost:3000/$playername/windows
+			curl -s -X PATCH -d "B" localhost:3000/"$playername"/windows
 			;;
 		"/secure/room")
-			curl -s -X PATCH localhost:3000/$playername/room
+			curl -s -X PATCH localhost:3000/"$playername"/room
+			;;
+		"/whiteboard/write")
+			echo -en "${YELLOW}"
+			IFS= read -r -p "Enter your message: " message 
+			echo -en "${NC}"
+			curl -s -d "$message" localhost:3000/$playername/whiteboard
+			;;
+		"/whiteboard/read")
+			curl -s localhost:3000/$playername/whiteboard
 			;;
 		"/time")
 			curl -s -X PATCH localhost:3000/$playername/time
