@@ -106,7 +106,7 @@ public class Player()
             cmd.ExecuteNonQuery();
 
             string eventMessage = GameEvent.RandomTrigger(db);
-
+            
             if (hasDanger)
             {
                 response.StatusCode = (int)HttpStatusCode.OK;
@@ -198,9 +198,10 @@ public class Player()
             WHERE id = $1;
             ");
         removeDanger.Parameters.AddWithValue(roomId);
+        string eventMessage = GameEvent.RandomTrigger(db);
         removeDanger.ExecuteNonQuery();
 
-        string message = "You cleared the room of dangerous objects, it's safe now.";
+        string message = $"You cleared the room of dangerous objects, it's safe now.{eventMessage}";
         return message;
     }
 
