@@ -198,10 +198,10 @@ public class Player()
             WHERE id = $1;
             ");
         removeDanger.Parameters.AddWithValue(roomId);
-        GameEvent.RandomTrigger(db);
+        string eventMessage = GameEvent.RandomTrigger(db);
         removeDanger.ExecuteNonQuery();
 
-        string message = "You cleared the room of dangerous objects, it's safe now.";
+        string message = $"You cleared the room of dangerous objects, it's safe now.{eventMessage}";
         return message;
     }
 
