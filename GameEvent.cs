@@ -85,8 +85,8 @@ public class GameEvent()
     {
         TimeSpan timeElapsed = Session.ElapsedTime(db);
 
-        double baseProbability = 0.1;
-        double exponentialRate = 0.05;
+        double baseProbability = 0.2;
+        double exponentialRate = 0.1;
         double timeInterval = timeElapsed.TotalMinutes;
 
         double probability = baseProbability * Math.Exp(exponentialRate * timeInterval);
