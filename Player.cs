@@ -7,7 +7,7 @@ public class Player()
     public static string Create(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
     {
         StreamReader reader = new(request.InputStream, request.ContentEncoding);
-        
+
 
 
         string checkIfNameExists = reader.ReadToEnd();
@@ -105,7 +105,7 @@ public class Player()
 
             cmd.ExecuteNonQuery();
 
-            GameEvent.RandomTrigger(db);
+            string eventMessage = GameEvent.RandomTrigger(db);
 
             if (hasDanger)
             {
@@ -116,7 +116,7 @@ public class Player()
             else
             {
                 response.StatusCode = (int)HttpStatusCode.OK;
-                message = $"{Check.EntryPoints(db, request, response, playerName)}";
+                message = $"{Check.EntryPoints(db, request, response, playerName)}{eventMessage}";
                 return message;
             }
         }
@@ -168,9 +168,9 @@ public class Player()
                 cmd.Parameters.AddWithValue(type);
                 cmd.ExecuteNonQuery();
 
-                message = $"{type} {lockName} is now locked";
+                string eventMessage = GameEvent.RandomTrigger(db);
+                message = $"{type} {lockName} is now locked{eventMessage}";
                 response.StatusCode = (int)HttpStatusCode.OK;
-                GameEvent.RandomTrigger(db);
                 return message;
             }
             else
@@ -186,6 +186,7 @@ public class Player()
             message = "Not a valid choice";
             return message;
         }
+
     }
     public static string RemoveDanger(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
     {
@@ -203,5 +204,78 @@ public class Player()
 
         string message = "You cleared the room of dangerous objects, it's safe now.";
         return message;
+    }
+
+    public static string ReadWhiteboard(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
+    {
+        string message = string.Empty;
+        if (!Check.RoomHasDanger(db, request, response))
+        {
+            if (Check.PlayerPosition(db, request, response) == 1)
+            {
+                var readWhiteboard = db.CreateCommand(@"
+                SELECT *
+                FROM public.whiteboard
+                ORDER BY id DESC LIMIT 5
+                ");
+                using var reader = readWhiteboard.ExecuteReader();
+                while (reader.Read())
+                {
+                    message = $"{reader.GetString(1)}\n\n{message}";
+                }
+
+                message = $"Messages on whiteboard:\n\n\n{message}{GameEvent.RandomTrigger(db)}";
+                response.StatusCode = (int)HttpStatusCode.OK;
+                return message;
+            }
+            else
+            {
+                message = $"The whiteboard is not here, it's in the kitchen.{GameEvent.RandomTrigger(db)}";
+                response.StatusCode = (int)HttpStatusCode.OK;
+                return message;
+            }
+        }
+        else
+        {
+            response.StatusCode = (int)HttpStatusCode.OK;
+            message = "You forgot to clear the room of dangers and you are now dead.";
+            return message;
+        }
+    }
+
+    public static string WriteOnWhiteBoard(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
+    {
+        string message = string.Empty;
+        if (!Check.RoomHasDanger(db, request, response))
+        {
+            if (Check.PlayerPosition(db, request, response) == 1)
+            {
+                StreamReader reader = new(request.InputStream, request.ContentEncoding);
+                string post = reader.ReadToEnd();
+
+                var postMessage = db.CreateCommand(@"
+                INSERT INTO public.whiteboard(message)
+                VALUES($1);
+                ");
+                postMessage.Parameters.AddWithValue(post);
+                postMessage.ExecuteNonQuery();
+
+                message = $"'{post}' added to the whiteboard.{GameEvent.RandomTrigger(db)}";
+                response.StatusCode = (int)HttpStatusCode.Created;
+                return message;
+            }
+            else
+            {
+                message = $"The whiteboard is not here, it's in the kitchen.{GameEvent.RandomTrigger(db)}";
+                response.StatusCode = (int)HttpStatusCode.OK;
+                return message;
+            }
+        }
+        else
+        {
+            response.StatusCode = (int)HttpStatusCode.OK;
+            message = "You forgot to clear the room of dangers and you are now dead.";
+            return message;
+        }
     }
 }

@@ -7,7 +7,7 @@ public class Check()
 {
     public static string Room(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
     {
-        GameEvent.RandomTrigger(db);
+        string eventMessage = GameEvent.RandomTrigger(db);
         string? message = string.Empty;
 
         int roomId = PlayerPosition(db, request, response);
@@ -24,11 +24,11 @@ public class Check()
         {
             if (reader.GetInt32(0) != 0)
             {
-                message = "You found a dangerous object in this room, be careful!";
+                message = $"You found a dangerous object in this room, be careful!{eventMessage}";
             }
             else
             {
-                message = "This room is safe, no dangers to be found.";
+                message = $"This room is safe, no dangers to be found.{eventMessage}";
             }
         }
         reader.Close();
@@ -38,7 +38,7 @@ public class Check()
     public static string Windows(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
     {
         int roomId = PlayerPosition(db, request, response);
-        bool hasDanger = Check.RoomHasDanger(db, request,response);
+        bool hasDanger = Check.RoomHasDanger(db, request, response);
         string message = string.Empty;
 
         if (!hasDanger)
@@ -66,7 +66,9 @@ public class Check()
             }
 
             reader2.Close();
-            GameEvent.RandomTrigger(db);
+            string eventMessage = GameEvent.RandomTrigger(db);
+            message += eventMessage;
+
             response.StatusCode = (int)HttpStatusCode.OK;
             return message;
         }
@@ -107,7 +109,8 @@ public class Check()
                         break;
                 }
             }
-            GameEvent.RandomTrigger(db);
+            string eventMessage = GameEvent.RandomTrigger(db);
+            message += eventMessage;
             response.StatusCode = (int)HttpStatusCode.OK;
             reader2.Close();
             return message;
@@ -123,6 +126,8 @@ public class Check()
 
     public static string EntryPoints(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response, string playerName)
     {
+        string message = string.Empty;
+
         var playerPos = db.CreateCommand(@"
             SELECT p.location, r.name
             FROM public.player p
@@ -144,7 +149,14 @@ public class Check()
         int doors = CountEntries(db, roomId, "Door");
         int windows = CountEntries(db, roomId, "Window");
 
-        string message = $"You are in the {roomName}. \nThere is {doors} door(s) and {windows} window(s).";
+        if (roomId == 1)
+        {
+            message = $"You are in the {roomName}. \nThere is {doors} door(s) and {windows} window(s).\nYou also see a whiteboard with a marker on the fridge door.";
+        }
+        else
+        {
+            message = $"You are in the {roomName}. \nThere is {doors} door(s) and {windows} window(s).";
+        }
 
         reader1.Close();
         return message;
@@ -192,7 +204,7 @@ public class Check()
     }
     public static bool IfGameOver(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
     {
-      var cmd = db.CreateCommand(@"
+        var cmd = db.CreateCommand(@"
       SELECT COUNT(*) 
       FROM public.player
       WHERE is_dead = true
