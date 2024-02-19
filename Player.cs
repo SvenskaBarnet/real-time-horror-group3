@@ -1,6 +1,5 @@
 ﻿using Npgsql;
 using System.Net;
-using System.Security.Cryptography.X509Certificates;
 namespace real_time_horror_group3;
 
 public class Player()
