@@ -106,6 +106,7 @@ public class GameEvent()
                 return $"\n\n{RandomEventMessage("object")}{GameEvent.SpawnDangerousObject(db)}";
             }
         }
+
         else
         {
             return string.Empty;
