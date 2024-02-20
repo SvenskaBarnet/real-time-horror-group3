@@ -209,8 +209,9 @@ void Router(IAsyncResult result)
                             bool playersReady = Check.AllPlayersReady(db, response);
                             if (playersReady)
                             {
+                                gameOver = false;
                                 Session.ResetDBForNewSession(db);
-                                message = GameMessage.Story(response);
+                                message = "Game reset. Please create a new player to continue";
                                 Session.Start(db);
                                 sessionStarted = true;
                             }
@@ -233,7 +234,7 @@ void Router(IAsyncResult result)
             }
         }
 
-        else
+        else 
         {
             if (gameOver == false)
             {
