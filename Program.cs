@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.Metrics;
+﻿using System.ComponentModel.Design;
+using System.Diagnostics.Metrics;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
@@ -57,7 +58,7 @@ void Router(IAsyncResult result)
 
         if (Check.EntryPointTimer(db) == false && Check.IfGameOver(db, request, response) == false)
         {
-            if (Check.IfDead(db, Check.VerifyPlayer(db,request)) == false)
+            if (Check.IfDead(db, Check.VerifyPlayer(db, request)) == false)
             {
                 switch (request.Url?.AbsolutePath.ToLower())
                 {
@@ -199,7 +200,7 @@ void Router(IAsyncResult result)
                         }
                         break;
 
-                    case (string path) when path == "/help":
+                    case (string path) when path == "/help" || path == "/":
                         message = GameMessage.Help(response);
                         break;
 
@@ -220,8 +221,19 @@ void Router(IAsyncResult result)
             {
                 GameEvent.AddScore(db, request, response);
                 gameOver = true;
+                message = $"{GameMessage.PrintGameOverScreen(db, request, response)}\n\nTo restart the game use:\ncurl localhost:3000/<player name>/restart";
             }
-            message = GameMessage.PrintGameOverScreen(db, request, response);
+            else if (request.Url?.AbsolutePath.ToLower() == $"/{Check.VerifyPlayer(db, request)}/restart" && request.Url?.AbsolutePath.ToLower() != "//restart" && gameOver)
+            {
+                sessionStarted = false;
+                gameOver = false;
+                Session.ResetDBForNewSession(db);
+                message = "Game reset. Please create a new player to continue";
+            }
+            else
+            {
+                message = GameMessage.PrintGameOverScreen(db, request, response);
+            }
 
         }
 
