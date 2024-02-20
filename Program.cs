@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.Metrics;
+using System.ComponentModel.Design;
+using System.Diagnostics.Metrics;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
@@ -57,30 +58,9 @@ void Router(IAsyncResult result)
 
         if (Check.EntryPointTimer(db) == false && Check.IfGameOver(db, request, response) == false)
         {
-<<<<<<< HEAD
-            case (string path) when path == "/new-player":
-                if (request.HttpMethod is "POST")
-                {
-                    message = await player.Create(request, response);
-                }
-                break;
-            case (string path) when path == $"/{await player.Verify(request, response)}/move":
-                if (request.HttpMethod is "PATCH")
-                {
-                    message = await player.Move(request, response);
-                }
-                break;
-            case (string path) when path == $"/{await player.Verify(request, response)}/windows":
-                if (request.HttpMethod is "GET")
-                {
-                    message = await check.Windows(request, response, player);
-                }
-                else if (request.HttpMethod is "PATCH")
-=======
-            if (Check.IfDead(db, Check.VerifyPlayer(db,request)) == false)
+            if (Check.IfDead(db, Check.VerifyPlayer(db, request)) == false)
             {
                 switch (request.Url?.AbsolutePath.ToLower())
->>>>>>> 51358d13cb3a6c815bcf4d4efd5cb25f04986212
                 {
                     case (string path) when path == "/player":
                         if (request.HttpMethod is "POST")
@@ -220,7 +200,7 @@ void Router(IAsyncResult result)
                         }
                         break;
 
-                    case (string path) when path == "/help":
+                    case (string path) when path == "/help" || path == "/":
                         message = GameMessage.Help(response);
                         break;
 
@@ -228,28 +208,12 @@ void Router(IAsyncResult result)
                         message = GameMessage.NotFound(response);
                         break;
                 }
-<<<<<<< HEAD
-                break;
-            case (string path) when path == $"/{await player.Verify(request, response)}/doors":
-                if (request.HttpMethod is "GET")
-                {
-                    message = await check.Doors(request, response, player);
-                }
-                else if (request.HttpMethod is "PATCH")
-                {
-                    Locking locking = new(db);
-                    message = await locking.Lock("Doors", check, player, request, response);
-                }
-
-                break;
-=======
             }
             else
             {
                 message = "Your player is dead";
             }
         }
->>>>>>> 51358d13cb3a6c815bcf4d4efd5cb25f04986212
 
         else
         {
@@ -257,8 +221,19 @@ void Router(IAsyncResult result)
             {
                 GameEvent.AddScore(db, request, response);
                 gameOver = true;
+                message = $"{GameMessage.PrintGameOverScreen(db, request, response)}\n\nTo restart the game use:\ncurl localhost:3000/<player name>/restart";
             }
-            message = GameMessage.PrintGameOverScreen(db, request, response);
+            else if (request.Url?.AbsolutePath.ToLower() == $"/{Check.VerifyPlayer(db, request)}/restart" && request.Url?.AbsolutePath.ToLower() != "//restart" && gameOver)
+            {
+                sessionStarted = false;
+                gameOver = false;
+                Session.ResetDBForNewSession(db);
+                message = "Game reset. Please create a new player to continue";
+            }
+            else
+            {
+                message = GameMessage.PrintGameOverScreen(db, request, response);
+            }
 
         }
 
