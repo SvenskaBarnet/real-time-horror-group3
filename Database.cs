@@ -6,7 +6,9 @@ public class Database(NpgsqlDataSource db)
     public async Task Create()
     {
         await using var cmd = db.CreateCommand(@"
-DROP TABLE IF EXISTS public.room, public.entry_point, public.danger, public.player, public.session;
+ALTER DATABASE notsohomealone
+SET TIMEZONE TO +01;
+DROP TABLE IF EXISTS public.room, public.entry_point, public.danger, public.player, public.session, public.whiteboard;
 CREATE TABLE IF NOT EXISTS public.room
 (
     id serial,
@@ -22,7 +24,7 @@ CREATE TABLE IF NOT EXISTS public.entry_point
     type text NOT NULL,
     is_locked boolean NOT NULL DEFAULT false,
     room_id integer NOT NULL,
-    ""time"" timestamp without time zone,
+    ""time"" timestamp with time zone,
     PRIMARY KEY (id)
 );
 
@@ -32,13 +34,28 @@ CREATE TABLE IF NOT EXISTS public.player
     name text NOT NULL,
     location integer NOT NULL,
     is_dead boolean NOT NULL DEFAULT false,
+    is_ready boolean NOT NULL DEFAULT false,
     PRIMARY KEY (id)
 );
 
 CREATE TABLE IF NOT EXISTS public.session
 (
     id serial,
-    ""time"" timestamp without time zone NOT NULL,
+    ""time"" timestamp with time zone NOT NULL,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE IF NOT EXISTS public.highscore
+(
+    id serial,
+    player_names text NOT NULL,
+    ""time"" text NOT NULL,
+    PRIMARY KEY (id)
+);
+CREATE TABLE IF NOT EXISTS public.whiteboard
+(
+    id serial,
+    message text,
     PRIMARY KEY (id)
 );
 
@@ -69,8 +86,6 @@ VALUES
 	('A', 'Door', 3),
 	('A', 'Window', 3),
 	('B', 'Window', 3);
-
-
 
 ");
 

@@ -1,71 +1,134 @@
 ﻿using Npgsql;
 using System.Net;
-using System.Text;
 
 namespace real_time_horror_group3;
 
-public class Check(NpgsqlDataSource db)
+public class Check()
 {
-    public async Task<string> Windows(HttpListenerRequest request, HttpListenerResponse response, Player player)
+    public static string Room(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
     {
-        int roomId = await PlayerPosition(request, response, player);
+        string eventMessage = GameEvent.RandomTrigger(db);
+        string? message = string.Empty;
 
-        await using var windows = db.CreateCommand(@"
+        int roomId = PlayerPosition(db, request, response);
+
+        NpgsqlCommand checkRoom = db.CreateCommand(@"
+            SELECT COUNT(id)
+            FROM room
+            WHERE id = $1 AND has_danger = true
+            ");
+        checkRoom.Parameters.AddWithValue(roomId);
+        using var reader = checkRoom.ExecuteReader();
+
+        if (reader.Read())
+        {
+            if (reader.GetInt32(0) != 0)
+            {
+                message = $"You found a dangerous object in this room, be careful!{eventMessage}";
+            }
+            else
+            {
+                message = $"This room is safe, no dangers to be found.{eventMessage}";
+            }
+        }
+        reader.Close();
+        response.StatusCode = (int)HttpStatusCode.OK;
+        return message;
+    }
+    public static string Windows(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
+    {
+        int roomId = PlayerPosition(db, request, response);
+        bool hasDanger = Check.RoomHasDanger(db, request, response);
+        string message = string.Empty;
+
+        if (!hasDanger)
+        {
+
+            var windows = db.CreateCommand(@"
                         SELECT name, is_locked
                         FROM entry_point
                         WHERE room_id = $1 AND type = 'Window';
                         ");
-        windows.Parameters.AddWithValue(roomId);
-        var reader2 = await windows.ExecuteReaderAsync();
+            windows.Parameters.AddWithValue(roomId);
+            using var reader2 = windows.ExecuteReader();
 
-        string message = string.Empty;
-        while (await reader2.ReadAsync())
-        {
-            switch (reader2.GetBoolean(1))
+            while (reader2.Read())
             {
-                case true:
-                    message += $"Window {reader2.GetString(0)} is locked.\n";
-                    break;
-                case false:
-                    message += $"Window {reader2.GetString(0)} is unlocked.\n";
-                    break;
+                switch (reader2.GetBoolean(1))
+                {
+                    case true:
+                        message += $"Window {reader2.GetString(0)} is locked.\n";
+                        break;
+                    case false:
+                        message += $"Window {reader2.GetString(0)} is unlocked.\n";
+                        break;
+                }
             }
-        }
-        response.StatusCode = (int)HttpStatusCode.OK;
-        return message;
-    }
-    public async Task<string> Doors(HttpListenerRequest request, HttpListenerResponse response, Player player)
-    {
-        int roomId = await PlayerPosition(request, response, player);
 
-        await using var windows = db.CreateCommand(@"
+            reader2.Close();
+            string eventMessage = GameEvent.RandomTrigger(db);
+            message += eventMessage;
+
+            response.StatusCode = (int)HttpStatusCode.OK;
+            return message;
+        }
+        else
+        {
+            GameEvent.RandomTrigger(db);
+            response.StatusCode = (int)HttpStatusCode.OK;
+            message = "You forgot to clear the room of dangers and you are now dead.";
+            return message;
+        }
+
+    }
+    public static string Doors(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
+    {
+        int roomId = PlayerPosition(db, request, response);
+        string message = string.Empty;
+        bool hasDanger = Check.RoomHasDanger(db, request, response);
+
+        if (!hasDanger)
+        {
+            var windows = db.CreateCommand(@"
                         SELECT name, is_locked
                         FROM entry_point
                         WHERE room_id = $1 AND type = 'Door';
                         ");
-        windows.Parameters.AddWithValue(roomId);
-        var reader2 = await windows.ExecuteReaderAsync();
+            windows.Parameters.AddWithValue(roomId);
+            using var reader2 = windows.ExecuteReader();
 
-        string message = string.Empty;
-        while (await reader2.ReadAsync())
-        {
-            switch (reader2.GetBoolean(1))
+            while (reader2.Read())
             {
-                case true:
-                    message += $"Door {reader2.GetString(0)} is locked.\n";
-                    break;
-                case false:
-                    message += $"Door {reader2.GetString(0)} is unlocked.\n";
-                    break;
+                switch (reader2.GetBoolean(1))
+                {
+                    case true:
+                        message += $"Door {reader2.GetString(0)} is locked.\n";
+                        break;
+                    case false:
+                        message += $"Door {reader2.GetString(0)} is unlocked.\n";
+                        break;
+                }
             }
+            string eventMessage = GameEvent.RandomTrigger(db);
+            message += eventMessage;
+            response.StatusCode = (int)HttpStatusCode.OK;
+            reader2.Close();
+            return message;
         }
-        response.StatusCode = (int)HttpStatusCode.OK;
-        return message;
+        else
+        {
+            GameEvent.RandomTrigger(db);
+            response.StatusCode = (int)HttpStatusCode.OK;
+            message = "You forgot to clear the room of dangers and you are now dead.";
+            return message;
+        }
     }
 
-    public async Task<string> EntryPoints(HttpListenerRequest request, HttpListenerResponse response, string playerName)
+    public static string EntryPoints(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response, string playerName)
     {
-        await using var playerPos = db.CreateCommand(@"
+        string message = string.Empty;
+
+        var playerPos = db.CreateCommand(@"
             SELECT p.location, r.name
             FROM public.player p
             JOIN public.room r ON r.id = p.location
@@ -73,60 +136,263 @@ public class Check(NpgsqlDataSource db)
             ");
 
         playerPos.Parameters.AddWithValue(playerName ?? string.Empty);
-        var reader1 = await playerPos.ExecuteReaderAsync();
+        using var reader1 = playerPos.ExecuteReader();
 
         int roomId = 0;
         string roomName = string.Empty;
-        if (await reader1.ReadAsync())
+        if (reader1.Read())
         {
             roomId = reader1.GetInt32(0);
             roomName = reader1.GetString(1);
         }
 
-        int doors = await GetEntries(roomId, "Door");
-        int windows = await GetEntries(roomId, "Window");
+        int doors = CountEntries(db, roomId, "Door");
+        int windows = CountEntries(db, roomId, "Window");
 
-        string message = $"Your are in the {roomName}. \nThere is {doors} door(s) and {windows} window(s).";
+        if (roomId == 1)
+        {
+            message = $"You are in the {roomName}. \nThere is {doors} door(s) and {windows} window(s).\nYou also see a whiteboard with a marker on the fridge door.";
+        }
+        else
+        {
+            message = $"You are in the {roomName}. \nThere is {doors} door(s) and {windows} window(s).";
+        }
 
+        reader1.Close();
         return message;
     }
 
-    async Task<int> GetEntries(int roomId, string type)
+    private static int CountEntries(NpgsqlDataSource db, int roomId, string type)
     {
-        await using var entryPoints = db.CreateCommand(@"
+        var entryPoints = db.CreateCommand(@"
             SELECT COUNT(type) 
             FROM entry_point
             WHERE room_id = $1 AND type = $2;
             ");
         entryPoints.Parameters.AddWithValue(roomId);
         entryPoints.Parameters.AddWithValue(type);
-        var reader2 = await entryPoints.ExecuteReaderAsync();
+        using var reader2 = entryPoints.ExecuteReader();
 
         int count = 0;
-        while (await reader2.ReadAsync())
+        while (reader2.Read())
         {
             count = reader2.GetInt32(0);
         }
 
+        reader2.Close();
         return count;
     }
-    public async Task<int> PlayerPosition(HttpListenerRequest request, HttpListenerResponse response, Player player)
+    public static int PlayerPosition(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
     {
-        await using var playerPos = db.CreateCommand(@"
+        var playerPos = db.CreateCommand(@"
                         SELECT location
                         FROM public.player
                         WHERE name = $1
                         ");
-        playerPos.Parameters.AddWithValue(await player.Verify(request, response));
+        playerPos.Parameters.AddWithValue(Check.VerifyPlayer(db, request));
 
-        var reader = await playerPos.ExecuteReaderAsync();
+        using var reader = playerPos.ExecuteReader();
         int roomId = 0;
 
-        if (await reader.ReadAsync())
+        if (reader.Read())
         {
             roomId = reader.GetInt32(0);
         }
 
+        reader.Close();
         return roomId;
+    }
+    public static bool IfGameOver(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
+    {
+        var cmd = db.CreateCommand(@"
+      SELECT COUNT(*) 
+      FROM public.player
+      WHERE is_dead = true
+        ");
+
+        var cmd2 = db.CreateCommand(@"
+        SELECT COUNT(*) 
+        FROM public.player;
+        ");
+
+
+        using var reader = cmd.ExecuteReader();
+        int deadPlayer = 0;
+        int totalPlayers = 0;
+
+
+        if (reader.Read())
+        {
+            deadPlayer = reader.GetInt32(0);
+        }
+
+        using var reader2 = cmd2.ExecuteReader();
+        if (reader2.Read())
+        {
+            totalPlayers = reader2.GetInt32(0);
+        }
+
+        reader.Close();
+        reader2.Close();
+
+        response.StatusCode = (int)HttpStatusCode.OK;
+        if (deadPlayer == totalPlayers && totalPlayers != 0)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    public static bool RoomHasDanger(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
+    {
+        var cmd = db.CreateCommand(@"
+        SELECT has_danger
+        FROM public.room
+        WHERE id = $1;
+    ");
+        cmd.Parameters.AddWithValue(Check.PlayerPosition(db, request, response));
+
+        using var reader = cmd.ExecuteReader();
+
+        bool hasDanger = false;
+        if (reader.Read())
+        {
+            hasDanger = reader.GetBoolean(0);
+        }
+        reader.Close();
+
+        if (hasDanger)
+        {
+            var killPlayer = db.CreateCommand(@"
+                UPDATE public.player
+                SET is_dead = true
+                WHERE name = $1
+                ");
+            killPlayer.Parameters.AddWithValue(Check.VerifyPlayer(db, request));
+            killPlayer.ExecuteNonQuery();
+        }
+        return hasDanger;
+    }
+
+    public static string VerifyPlayer(NpgsqlDataSource db, HttpListenerRequest request)
+    {
+        string? path = request.Url?.AbsolutePath;
+        string? name = path?.Split('/')[1] ?? string.Empty;
+        string username = string.Empty;
+
+        var cmd = db.CreateCommand(@"
+            SELECT (name)
+            FROM public.player
+            WHERE name = $1
+            ");
+        cmd.Parameters.AddWithValue(name ?? string.Empty);
+        using var reader = cmd.ExecuteReader();
+
+        if (reader.Read())
+        {
+            username = reader.GetString(0);
+        }
+
+        reader.Close();
+        return username;
+    }
+
+    public static bool AllPlayersReady(NpgsqlDataSource db, HttpListenerResponse response)
+    {
+        using var cmd = db.CreateCommand(@"
+        SELECT COUNT(*)
+        FROM public.player
+        ");
+
+        using var reader1 = cmd.ExecuteReader();
+
+        int totalPlayers = 0;
+        if (reader1.Read())
+        {
+            totalPlayers = reader1.GetInt32(0);
+        }
+
+        reader1.Close();
+
+        var cmd1 = db.CreateCommand(@"
+        SELECT COUNT(*) 
+        FROM public.player 
+        WHERE is_ready = true
+        ");
+
+        using var reader2 = cmd1.ExecuteReader();
+
+        int readyPlayers = 0;
+        if (reader2.Read())
+        {
+            readyPlayers = reader2.GetInt32(0);
+        }
+        response.StatusCode = (int)HttpStatusCode.OK;
+
+        reader2.Close();
+        if (totalPlayers == readyPlayers)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    public static bool IfDead(NpgsqlDataSource db, string playerName)
+    {
+        var cmd = db.CreateCommand(@"
+        SELECT name, is_dead
+        FROM public.player
+        WHERE name = $1 AND is_dead = true;
+        ");
+        cmd.Parameters.AddWithValue(playerName);
+
+        using var reader = cmd.ExecuteReader();
+        bool playerDeath = false;
+
+        if (reader.Read())
+        {
+            playerDeath = reader.GetBoolean(1);
+        }
+        reader.Close();
+        return playerDeath;
+    }
+    public static bool EntryPointTimer(NpgsqlDataSource db)
+    {
+        bool gameOver = false;
+        var cmd = db.CreateCommand(@"
+        SELECT to_char(""time"", 'HH24:MI:SS')
+        FROM public.entry_point
+        WHERE time is not null;
+        ");
+
+        using var reader = cmd.ExecuteReader();
+        TimeOnly currentTime = TimeOnly.FromDateTime(DateTime.Now);
+        String sessionStart = string.Empty;
+
+        while (reader.Read())
+        {
+            sessionStart = reader.GetString(0);
+            var split = sessionStart.Split(":");
+
+            TimeOnly startTime = new(int.Parse(split[0]), int.Parse(split[1]), int.Parse(split[2]));
+
+            TimeSpan timeElapsed = currentTime - startTime;
+            if ((timeElapsed.TotalSeconds > 240)) // 4 minuter tills det blir "game over"
+            {
+                gameOver = true;
+                break;
+            }
+            else
+            {
+                gameOver = false;
+            }
+        }
+        reader.Close();
+        return gameOver;
     }
 }
