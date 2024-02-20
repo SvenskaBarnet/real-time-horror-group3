@@ -40,10 +40,10 @@ public class Check()
         int roomId = PlayerPosition(db, request, response);
         bool hasDanger = Check.RoomHasDanger(db, request, response);
         string message = string.Empty;
+        string eventMessage = GameEvent.RandomTrigger(db);
 
         if (!hasDanger)
         {
-
             var windows = db.CreateCommand(@"
                         SELECT name, is_locked
                         FROM entry_point
@@ -66,7 +66,6 @@ public class Check()
             }
 
             reader2.Close();
-            string eventMessage = GameEvent.RandomTrigger(db);
             message += eventMessage;
 
             response.StatusCode = (int)HttpStatusCode.OK;
@@ -74,7 +73,6 @@ public class Check()
         }
         else
         {
-            GameEvent.RandomTrigger(db);
             response.StatusCode = (int)HttpStatusCode.OK;
             message = "You forgot to clear the room of dangers and you are now dead.";
             return message;
@@ -86,6 +84,7 @@ public class Check()
         int roomId = PlayerPosition(db, request, response);
         string message = string.Empty;
         bool hasDanger = Check.RoomHasDanger(db, request, response);
+        string eventMessage = GameEvent.RandomTrigger(db);
 
         if (!hasDanger)
         {
@@ -109,7 +108,6 @@ public class Check()
                         break;
                 }
             }
-            string eventMessage = GameEvent.RandomTrigger(db);
             message += eventMessage;
             response.StatusCode = (int)HttpStatusCode.OK;
             reader2.Close();
@@ -124,7 +122,7 @@ public class Check()
         }
     }
 
-    public static string EntryPoints(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response, string playerName)
+    public static string EntryPoints(NpgsqlDataSource db, HttpListenerResponse response, string playerName)
     {
         string message = string.Empty;
 
@@ -148,6 +146,7 @@ public class Check()
 
         int doors = CountEntries(db, roomId, "Door");
         int windows = CountEntries(db, roomId, "Window");
+        response.StatusCode = (int)HttpStatusCode.OK;
 
         if (roomId == 1)
         {
@@ -382,7 +381,7 @@ public class Check()
             TimeOnly startTime = new(int.Parse(split[0]), int.Parse(split[1]), int.Parse(split[2]));
 
             TimeSpan timeElapsed = currentTime - startTime;
-            if ((timeElapsed.TotalSeconds > 240)) // 4 minuter tills det blir "game over"
+            if ((timeElapsed.TotalSeconds > 240))
             {
                 gameOver = true;
                 break;

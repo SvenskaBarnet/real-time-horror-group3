@@ -1,18 +1,13 @@
-﻿using System.ComponentModel.Design;
-using System.Diagnostics.Metrics;
-using System.Net;
-using System.Security.Cryptography;
+﻿using System.Net;
 using System.Text;
 using Npgsql;
 using real_time_horror_group3;
-
 
 string dbUri = "Host=localhost;Port=5455;Username=postgres;Password=postgres;Database=notsohomealone";
 using var db = NpgsqlDataSource.Create(dbUri);
 
 Database database = new(db);
 await database.Create();
-
 
 bool gameOver = false;
 bool listen = true;
@@ -29,6 +24,7 @@ Console.CancelKeyPress += delegate (object? sender, ConsoleCancelEventArgs e)
 int port = 3000;
 HttpListener listener = new();
 State state = new State(listener, db);
+
 listener.Prefixes.Add($"http://localhost:{port}/");
 listener.Start();
 Console.WriteLine($"Server listening on port: {port}");
@@ -52,7 +48,6 @@ void Router(IAsyncResult result)
         HttpListenerContext context = listener.EndGetContext(result);
         HttpListenerResponse response = context.Response;
         HttpListenerRequest request = context.Request;
-
 
         response.ContentType = "text/plain";
 
