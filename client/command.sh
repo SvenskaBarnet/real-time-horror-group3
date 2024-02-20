@@ -22,6 +22,7 @@ printf "%-26s %s\n" "Clear room of dangers:" "/secure/room"
 printf "%-26s %s\n" "Write on whiteboard:" "/whiteboard/write"
 printf "%-26s %s\n" "Read on whiteboard:" "/whiteboard/read"
 printf "%-26s %s\n" "See elapsed time:" "/time"
+printf "%-26s %s\n" "Restart the game" "/restart"
 printf "%-26s %s\n\n\n" "See available commands:" "/help"
 echo -en "${NC}"
 
@@ -51,6 +52,7 @@ while true; do
 			printf "%-26s %s\n" "Write on whiteboard:" "/whiteboard/write"
 			printf "%-26s %s\n" "Read on whiteboard:" "/whiteboard/read"
             printf "%-26s %s\n" "See elapsed time:" "/time"
+			printf "%-26s %s\n" "Restart the game" "/restart"
 			printf "%-26s %s\n\n\n" "See available commands:" "/help"
 			echo -en "${NC}"
 			;;
@@ -107,6 +109,9 @@ while true; do
 			;;
 		"/time")
 			curl -s -X PATCH localhost:3000/$playername/time
+			;;
+		"/restart")
+			curl -X PATCH localhost:3000/<player name>/restart
 			;;
 		"/exit")
 			echo "Exiting game"

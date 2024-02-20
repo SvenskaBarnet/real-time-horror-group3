@@ -48,6 +48,9 @@ curl localhost:3000/<player name>/whiteboard
 See time elapsed since start
 curl localhost:3000/<player name>/time
 
+Restart the game
+curl -X PATCH localhost:3000/<player name>/restart
+
 Room names: 'kitchen', 'hallway', 'living room'.
 Each room has 1 door 'A' and two windows 'A' & 'B'.
 "; 
