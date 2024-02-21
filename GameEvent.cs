@@ -132,7 +132,6 @@ public class GameEvent()
         entryMessages.Add("Shadows dance menacingly outside the ");
         entryMessages.Add("The faint sound of a child's laughter drifts from the ");
         entryMessages.Add("An unsettling scratching noise comes from the ");
-        entryMessages.Add("The creaking of an old gate nearby sends shivers down your spine");
         entryMessages.Add("A distant, mournful howl pierces the silence near the ");
         entryMessages.Add("The unsettling sound of chains rattling outside the ");
         entryMessages.Add("A cold breeze whistles through the cracks of the ");

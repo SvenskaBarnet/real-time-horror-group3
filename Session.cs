@@ -6,7 +6,6 @@ public class Session()
 {
     public static void Start(NpgsqlDataSource db)
     {
-        string message = string.Empty;
         var select = db.CreateCommand(@"
                         SELECT COUNT(id)
                         FROM public.session
