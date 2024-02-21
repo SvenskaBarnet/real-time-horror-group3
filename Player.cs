@@ -7,10 +7,8 @@ public class Player()
     public static string Create(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
     {
         StreamReader reader = new(request.InputStream, request.ContentEncoding);
-
-
-
         string checkIfNameExists = reader.ReadToEnd();
+        
         var selectChoice = db.CreateCommand(@$"
             SELECT COUNT(*)
             FROM public.player
@@ -42,8 +40,7 @@ public class Player()
         cmd.Parameters.AddWithValue(name);
         cmd.ExecuteNonQuery();
 
-        string message = @$"Player '{name}' has been created. Type /ready when you are ready. Game can only start when all players are ready.
-        And you will start in 'Kitchen'";
+        string message = $"Player '{name}' has been created. Type /ready when you are ready. Game can only start when all players are ready.\nAnd you will start in 'Kitchen'";
         response.StatusCode = (int)HttpStatusCode.Created;
 
         return message;
@@ -71,7 +68,7 @@ public class Player()
     public static string Move(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
 
     {
-        string message = string.Empty;
+        string message;
         StreamReader reader = new(request.InputStream, request.ContentEncoding);
         string roomName = reader.ReadToEnd();
         int roomId = 0;
@@ -116,7 +113,7 @@ public class Player()
             else
             {
                 response.StatusCode = (int)HttpStatusCode.OK;
-                message = $"{Check.EntryPoints(db, request, response, playerName)}{eventMessage}";
+                message = $"{Check.EntryPoints(db, response, playerName)}{eventMessage}";
                 return message;
             }
         }
@@ -130,7 +127,7 @@ public class Player()
 
     public static string Lock(NpgsqlDataSource db, string type, HttpListenerRequest request, HttpListenerResponse response)
     {
-        string message = string.Empty;
+        string message;
         StreamReader reader = new(request.InputStream, request.ContentEncoding);
         string lockName = reader.ReadToEnd();
 
