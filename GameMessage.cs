@@ -16,7 +16,7 @@ Ready:
 curl -X PATCH localhost:3000/<player name>/ready
 
 Start game: 
-curl localhost:3000/<player name>/start
+curl -X PATCH localhost:3000/<player name>/start
 
 Move to room: 
 curl -X PATCH -d ""<room name>"" localhost:3000/<player name>/move
@@ -47,6 +47,9 @@ curl localhost:3000/<player name>/whiteboard
 
 See time elapsed since start
 curl localhost:3000/<player name>/time
+
+Restart the game
+curl -X PATCH localhost:3000/<player name>/restart
 
 Room names: 'kitchen', 'hallway', 'living room'.
 Each room has 1 door 'A' and two windows 'A' & 'B'.

@@ -22,6 +22,7 @@ printf "%-26s %s\n" "Clear room of dangers:" "/secure/room"
 printf "%-26s %s\n" "Write on whiteboard:" "/whiteboard/write"
 printf "%-26s %s\n" "Read on whiteboard:" "/whiteboard/read"
 printf "%-26s %s\n" "See elapsed time:" "/time"
+printf "%-26s %s\n" "Restart the game" "/restart"
 printf "%-26s %s\n\n\n" "See available commands:" "/help"
 echo -en "${NC}"
 
@@ -30,6 +31,7 @@ playername=""
 while true; do
 	echo -en "${YELLOW}"
 	read -p "Enter command (type '/exit' to quit): " command
+	command=$(echo "$command" | tr '[:upper:]' '[:lower:]')
 	echo -en "${NC}"
 
 	case "$command" in
@@ -51,6 +53,29 @@ while true; do
 			printf "%-26s %s\n" "Write on whiteboard:" "/whiteboard/write"
 			printf "%-26s %s\n" "Read on whiteboard:" "/whiteboard/read"
             printf "%-26s %s\n" "See elapsed time:" "/time"
+			printf "%-26s %s\n" "Restart the game" "/restart"
+			printf "%-26s %s\n\n\n" "See available commands:" "/help"
+			echo -en "${NC}"
+			;;
+			"/")
+			echo -en "${YELLOW}"
+			printf "\n%-26s %s\n" "Create player:" "/player"
+			printf "%-26s %s\n" "Set player as ready:" "/ready"
+			printf "%-26s %s\n" "Start game:" "/start"
+			printf "%-26s %s\n" "Check room for dangers:" "/check/room"
+			printf "%-26s %s\n" "Check status of windows:" "/check/windows"
+			printf "%-26s %s\n" "Check status of doors:" "/check/doors"
+			printf "%-26s %s\n" "Move to kitchen:" "/move/kitchen"
+			printf "%-26s %s\n" "Move to hallway:" "/move/hallway"
+			printf "%-26s %s\n" "Move to living room:" "/move/living room"
+			printf "%-26s %s\n" "Lock door:" "/lock/door"
+			printf "%-26s %s\n" "Lock window A:" "/lock/window/A"
+			printf "%-26s %s\n" "Lock window B:" "/lock/window/B"
+			printf "%-26s %s\n" "Clear room of dangers:" "/secure/room"
+			printf "%-26s %s\n" "Write on whiteboard:" "/whiteboard/write"
+			printf "%-26s %s\n" "Read on whiteboard:" "/whiteboard/read"
+            printf "%-26s %s\n" "See elapsed time:" "/time"
+			printf "%-26s %s\n" "Restart the game" "/restart"
 			printf "%-26s %s\n\n\n" "See available commands:" "/help"
 			echo -en "${NC}"
 			;;
@@ -64,7 +89,7 @@ while true; do
 			curl -s -X PATCH localhost:3000/"$playername"/ready
 			;;
 		"/start")
-			curl -s localhost:3000/"$playername"/start
+			curl -s -X PATCH localhost:3000/"$playername"/start
 			;;
 		"/check/room")
 			curl -s localhost:3000/"$playername"/room
@@ -107,6 +132,9 @@ while true; do
 			;;
 		"/time")
 			curl -s -X PATCH localhost:3000/$playername/time
+			;;
+		"/restart")
+			curl -s -X PATCH localhost:3000/$playername/restart
 			;;
 		"/exit")
 			echo "Exiting game"

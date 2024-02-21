@@ -72,7 +72,7 @@ void Router(IAsyncResult result)
                         break;
 
                     case (string path) when path == $"/{Check.VerifyPlayer(db, request)}/start" && path != $"//start":
-                        if (request.HttpMethod is "GET")
+                        if (request.HttpMethod is "PATCH")
                         {
                             bool playersReady = Check.AllPlayersReady(db, response);
                             if (playersReady)
@@ -196,7 +196,10 @@ void Router(IAsyncResult result)
                         break;
 
                     case (string path) when path == "/help" || path == "/":
-                        message = GameMessage.Help(response);
+                        if (request.HttpMethod is "GET")
+                        {
+                            message = GameMessage.Help(response);
+                        }                            
                         break;
 
                     default:
@@ -216,20 +219,22 @@ void Router(IAsyncResult result)
             {
                 GameEvent.AddScore(db, request, response);
                 gameOver = true;
-                message = $"{GameMessage.PrintGameOverScreen(db, request, response)}\n\nTo restart the game use:\ncurl localhost:3000/<player name>/restart";
+                message = $"{GameMessage.PrintGameOverScreen(db, request, response)}\n\nTo restart the game use:\ncurl -X PATCH localhost:3000/<player name>/restart";
             }
             else if (request.Url?.AbsolutePath.ToLower() == $"/{Check.VerifyPlayer(db, request)}/restart" && request.Url?.AbsolutePath.ToLower() != "//restart" && gameOver)
             {
-                sessionStarted = false;
-                gameOver = false;
-                Session.ResetDBForNewSession(db);
-                message = "Game reset. Please create a new player to continue";
+                if (request.HttpMethod == "PATCH")
+                {
+                    sessionStarted = false;
+                    gameOver = false;
+                    Session.ResetDBForNewSession(db);
+                    message = "Game reset. Please create a new player to continue";
+                }
             }
             else
             {
                 message = GameMessage.PrintGameOverScreen(db, request, response);
             }
-
         }
 
         message = $"\n\n{message}\n\n";
