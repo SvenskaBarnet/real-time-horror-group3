@@ -112,10 +112,10 @@ while true; do
 		"/lock/door")
 			curl -s -X PATCH -d "A" localhost:3000/"$playername"/doors
 			;;
-		"/lock/window/A")
+		"/lock/window/a")
 			curl -s -X PATCH -d "A" localhost:3000/"$playername"/windows
 			;;
-		"/lock/window/B")
+		"/lock/window/b")
 			curl -s -X PATCH -d "B" localhost:3000/"$playername"/windows
 			;;
 		"/secure/room")
