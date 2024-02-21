@@ -8,7 +8,7 @@ public class Database(NpgsqlDataSource db)
         await using var cmd = db.CreateCommand(@"
 ALTER DATABASE notsohomealone
 SET TIMEZONE TO +01;
-DROP TABLE IF EXISTS public.room, public.entry_point, public.danger, public.player, public.session, public.whiteboard;
+DROP TABLE IF EXISTS public.room, public.entry_point, public.player, public.session, public.whiteboard;
 CREATE TABLE IF NOT EXISTS public.room
 (
     id serial,
@@ -52,6 +52,7 @@ CREATE TABLE IF NOT EXISTS public.highscore
     ""time"" text NOT NULL,
     PRIMARY KEY (id)
 );
+
 CREATE TABLE IF NOT EXISTS public.whiteboard
 (
     id serial,
@@ -88,7 +89,6 @@ VALUES
 	('B', 'Window', 3);
 
 ");
-
         await cmd.ExecuteNonQueryAsync();
         Console.WriteLine("Created and populated database");
     }
