@@ -77,7 +77,7 @@ void Router(IAsyncResult result)
                         break;
 
                     case (string path) when path == $"/{Check.VerifyPlayer(db, request)}/start" && path != $"//start":
-                        if (request.HttpMethod is "GET")
+                        if (request.HttpMethod is "PATCH")
                         {
                             bool playersReady = Check.AllPlayersReady(db, response);
                             if (playersReady)

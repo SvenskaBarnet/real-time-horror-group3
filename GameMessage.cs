@@ -16,7 +16,7 @@ Ready:
 curl -X PATCH localhost:3000/<player name>/ready
 
 Start game: 
-curl localhost:3000/<player name>/start
+curl -X PATCH localhost:3000/<player name>/start
 
 Move to room: 
 curl -X PATCH -d ""<room name>"" localhost:3000/<player name>/move
