@@ -7,7 +7,7 @@ namespace real_time_horror_group3
 {
     public class Player
     {
-        private static NpgsqlConnection dbConnection; 
+        private static NpgsqlConnection dbConnection;
 
         public static string Create(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
         {
@@ -278,42 +278,72 @@ namespace real_time_horror_group3
             }
         }
 
+        // Metod för att hämta och visa spelarens nuvarande plats
         public static string DisplayLocation(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
         {
+            // Verifiera spelarens namn genom att anropa Verify-metoden
             string playerName = Verify(db, request, response);
 
+            // Skapa en SQL-fråga för att hämta spelarens plats från databasen
             var cmd = db.CreateCommand(@"
-                SELECT location
-                FROM public.player
-                WHERE name = $1
-            ");
+        SELECT location
+        FROM public.player
+        WHERE name = $1
+    ");
             cmd.Parameters.AddWithValue(playerName);
 
+            // Utför frågan och hämtar platsen från resultatet
             using var reader = cmd.ExecuteReader();
-
             int playerLocation = 0;
             if (reader.Read())
             {
                 playerLocation = reader.GetInt32(0);
             }
-
             reader.Close();
 
+            // Generera ett platsmeddelande med GetLocationMessage
             string locationMessage = GetLocationMessage(playerLocation);
-            response.StatusCode = (int)HttpStatusCode.OK;
 
+            // Sätt HTTP-status till OK och returnera platsmeddelandet
+            response.StatusCode = (int)HttpStatusCode.OK;
             return locationMessage;
         }
 
+        // Metod för att verifiera att spelarens namn finns i databasen
         private static string Verify(NpgsqlDataSource db, HttpListenerRequest request, HttpListenerResponse response)
         {
-            throw new NotImplementedException();
+            // Läs spelarens namn från HTTP-förfrågan med en StreamReader
+            StreamReader reader = new StreamReader(request.InputStream, request.ContentEncoding);
+            string playerName = reader.ReadToEnd();
+            reader.Close();
+
+            // Skapa en SQL-fråga för att kontrollera namnet i databasen
+            var selectCmd = db.CreateCommand(@"
+        SELECT name
+        FROM public.player
+        WHERE name = $1
+    ");
+            selectCmd.Parameters.AddWithValue(playerName);
+
+            // Använd checkName för att kolla om namnet finns i databasen
+            using var checkName = selectCmd.ExecuteReader();
+            if (checkName.Read())
+            {
+                return playerName; // Returnera namnet om det hittades
+            }
+            else
+            {
+                // Om namnet inte hittades, sätt HTTP-status till BadRequest och returnera null
+                response.StatusCode = (int)HttpStatusCode.BadRequest;
+                return null;
+            }
         }
 
+        // Metod för att generera ett meddelande baserat på spelarens plats
         private static string GetLocationMessage(int location)
         {
+            // Använd en switch-sats för att matcha platsen och returnera ett motsvarande meddelande
             string map = GetGameMap(location);
-
             switch (location)
             {
                 case 1:
@@ -327,8 +357,10 @@ namespace real_time_horror_group3
             }
         }
 
+        // Metod för att generera en spelkarta baserat på det aktuella rummet
         private static string GetGameMap(int room)
         {
+            // Använd en switch-sats för att matcha rummet och returnera en karta
             switch (room)
             {
                 case 1:
@@ -369,55 +401,13 @@ namespace real_time_horror_group3
             }
         }
 
-        public static void StartHttpServer()
-        {
-            var listener = new HttpListener();
-            listener.Prefixes.Add("http://localhost:3000/");
-            listener.Start();
-
-            Console.WriteLine("Listening for HTTP requests...");
-
-            while (true)
-            {
-                var context = listener.GetContext();
-                ProcessRequest(context);
-            }
-        }
-
-        private static void ProcessRequest(HttpListenerContext context)
-        {
-            var request = context.Request;
-            var response = context.Response;
-
-            if (request.HttpMethod == "GET" && request.Url.LocalPath == "/map")
-            {
-                int playerLocation = GetPlayerLocation(request);
-
-                response.ContentType = "text/plain";
-                string map = GetGameMap(playerLocation);
-
-                using (var writer = new StreamWriter(response.OutputStream))
-                {
-                    writer.Write(map);
-                }
-            }
-            else
-            {
-                response.StatusCode = (int)HttpStatusCode.NotFound;
-            }
-
-            response.Close();
-        }
-
-        private static int GetPlayerLocation(HttpListenerRequest request)
-        {
-            throw new NotImplementedException();
-        }
-
+        // Metod för att hämta spelarens plats från databasen
         private static int GetPlayerLocation(NpgsqlDataSource db, HttpListenerRequest request)
         {
+            // Anropa Verify för att verifiera spelarens namn
             string playerName = Verify(db, request, null);
 
+            // Skapa en SQL-fråga för att hämta platsen från databasen
             var cmd = db.CreateCommand(@"
         SELECT location
         FROM public.player
@@ -425,18 +415,17 @@ namespace real_time_horror_group3
     ");
             cmd.Parameters.AddWithValue(playerName);
 
+            // Utför frågan och hämtar platsen från resultatet
             using var reader = cmd.ExecuteReader();
-
             int playerLocation = 0;
             if (reader.Read())
             {
                 playerLocation = reader.GetInt32(0);
             }
-
             reader.Close();
 
+            // Returnera spelarens plats
             return playerLocation;
         }
-
     }
 }
